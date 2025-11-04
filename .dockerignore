@@ -1,0 +1,7 @@
+db.sqlite3
+.venv
+myenv
+venv 
+Dockerfile
+docker-compose.yml
+.git
