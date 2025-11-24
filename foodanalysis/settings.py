@@ -341,6 +341,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://fab492fa03e4.ngrok-free.app",
     "http://127.0.0.1:8022",
     "http://localhost:8022",
+    "https://fcf13a9f777b.ngrok-free.app"
 ]
 
 # Firebase Configuration

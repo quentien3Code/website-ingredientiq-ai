@@ -22,7 +22,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse, FileResponse
 import os
-
+from django.views.generic import TemplateView
 def serve_react_app(request, path=None):
     """Serve the React app's index.html for all routes"""
     build_path = os.path.join(settings.BASE_DIR, 'build', 'index.html')
@@ -102,6 +102,7 @@ def serve_logo(request, filename):
         return HttpResponse('Logo not found', status=404)
 
 urlpatterns = [
+    path('landing/',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
     path('foodapp/',include('foodinfo.urls')),
     path('accounts/', include('allauth.urls')),
