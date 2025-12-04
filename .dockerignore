@@ -1,4 +1,6 @@
 .venv
 myenv
 venv 
+Dockerfile
+docker-compose.yml
 .git
