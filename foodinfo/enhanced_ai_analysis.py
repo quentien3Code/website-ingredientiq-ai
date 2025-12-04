@@ -110,7 +110,7 @@ class EnhancedAIAnalysis:
         """
         try:
             completion = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4-turbo",  # Updated per client spec
                 messages=[
                     {"role": "system", "content": "You are a health expert. Provide brief, helpful advice."},
                     {"role": "user", "content": prompt},

@@ -102,7 +102,7 @@ def serve_logo(request, filename):
         return HttpResponse('Logo not found', status=404)
 
 urlpatterns = [
-    path('landing/',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
+    path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
     path('foodapp/',include('foodinfo.urls')),
     path('accounts/', include('allauth.urls')),
