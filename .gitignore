@@ -147,4 +147,23 @@ logs/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# ===================
+# SECURITY - NEVER COMMIT THESE
+# ===================
+# Firebase Admin SDK credentials
+*firebase-adminsdk*.json
+*-firebase*.json
+
+# Service account keys
+*-b4fa6002e33d.json
+teams-*.json
+
+# Backup files
+*.bak
+*.backup
+*_backup.py
+
+# Keep .env.example, ignore actual .env
+!.env.example

@@ -1,0 +1,101 @@
+{
+  "name": "IngredientIQ - Real-Time Ingredient Decision Support",
+  "short_name": "IngredientIQ",
+  "description": "Real-time ingredient decision support at checkout. Hybrid AI: human-centered logic at the core, ML for precision, AI for plain-language translation. Free global access.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "categories": ["health", "food", "lifestyle", "nutrition", "shopping"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/app-1.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Home Screen - Scan food labels instantly"
+    },
+    {
+      "src": "/images/app-2.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Ingredient Analysis Results"
+    },
+    {
+      "src": "/images/app-3.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Personalized Health Profile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Label",
+      "short_name": "Scan",
+      "description": "Quickly scan a food label",
+      "url": "/?action=scan",
+      "icons": [{"src": "/images/icon-service-1.svg", "sizes": "96x96"}]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View your health profile and preferences",
+      "url": "/profile",
+      "icons": [{"src": "/images/profile.gif", "sizes": "96x96"}]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.ingredientiq.app",
+      "id": "com.ingredientiq.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/ingredientiq/id123456789"
+    }
+  ],
+  "prefer_related_applications": false,
+  "iarc_rating_id": "",
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "image",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  }
+}

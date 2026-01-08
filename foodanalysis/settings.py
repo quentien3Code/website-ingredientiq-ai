@@ -25,13 +25,24 @@ AUTH_USER_MODEL = 'foodinfo.User'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e)m3@n3vazo2!0l!xo%j1ov+=8q##%9d(*xq3!mu2j=raw!u24'
+# SECURITY: Secret key loaded from environment variable
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-CHANGE-ME-IN-PRODUCTION')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY: Debug mode from environment (default False for safety)
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*','18.188.184.213','54.160.233.148','ingredientiq.ai','172.16.100.214','fab492fa03e4.ngrok-free.app']
+# SECURITY: Restrict allowed hosts in production
+# Railway automatically sets RAILWAY_PUBLIC_DOMAIN
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Add Railway and production domains
+RAILWAY_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
+
+# Always allow the production domain
+if 'ingredientiq.ai' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(['ingredientiq.ai', 'www.ingredientiq.ai'])
 
 
 # Application definition
@@ -72,6 +83,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'foodanalysis.middleware.SecurityHeadersMiddleware',  # Custom security headers
     'foodanalysis.middleware.StaticFileMIMEMiddleware',  # Custom MIME type handling
+    'foodanalysis.middleware.SEOHeadersMiddleware',  # SEO optimization headers
 ]
 
 ROOT_URLCONF = 'foodanalysis.urls'
@@ -154,16 +166,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR is already defined at the top of settings.py
+# Using Path object for consistency
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Static files directories - organized structure
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-    os.path.join(BASE_DIR, 'build', 'static'),
-    os.path.join(BASE_DIR, 'react_admin', 'static'),        
+    os.path.join(BASE_DIR, 'static'),                         # Shared static (manifests)
+    os.path.join(BASE_DIR, 'frontend', 'website', 'static'),  # Public website React build
+    os.path.join(BASE_DIR, 'frontend', 'admin', 'static'),    # Admin panel React build
 ]
+
+# Data files directory (for API data like food.json)
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 
 # Default primary key field type
@@ -322,57 +338,49 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
+# =============================================================================
+# CORS & CSRF Configuration for Railway + ingredientiq.ai
+# =============================================================================
+
 CORS_ALLOWED_ORIGINS = [
-    "http://18.188.184.213:8018",
-    "http://54.160.233.148:8888",
     "https://ingredientiq.ai",
-    "http://172.16.100.214",
-    "https://fab492fa03e4.ngrok-free.app",
-    "http://127.0.0.1:8022",
-    "http://localhost:8022",
+    "https://www.ingredientiq.ai",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
 ]
+
+# Add Railway domain dynamically if set
+RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+if RAILWAY_PUBLIC_DOMAIN:
+    CORS_ALLOWED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://54.160.233.148:8888",
     "https://ingredientiq.ai",
-    "http://18.188.184.213:8018",
-    "https://18.188.184.213:8018",
-    "http://54.160.233.148:8081",
-    "https://fab492fa03e4.ngrok-free.app",
-    "http://127.0.0.1:8022",
-    "http://localhost:8022",
-    "https://fcf13a9f777b.ngrok-free.app"
+    "https://www.ingredientiq.ai",
+    "http://localhost:3000",
+    "http://localhost:8000",
 ]
 
-# Firebase Configuration
-FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "ai-ingredients-3a169-firebase-adminsdk-fbsvc-0b7720be4a.json")
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
-# Celery Configuration (Optional - for background tasks)
-# Uncomment and configure if you want to use Celery for background tasks
-# CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-# CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = TIME_ZONE
+# Allow credentials for cross-origin requests
+CORS_ALLOW_CREDENTIALS = True
 
-# Celery Beat Configuration (Optional)
-# from celery.schedules import crontab
-# CELERY_BEAT_SCHEDULE = {
-#     'check-subscription-expiry': {
-#         'task': 'foodinfo.tasks.check_subscription_expiry_task',
-#         'schedule': crontab(hour=9, minute=0),  # Daily at 9 AM
-#     },
-#     'send-app-update-notifications': {
-#         'task': 'foodinfo.tasks.send_app_update_notifications_task',
-#         'schedule': crontab(hour=10, minute=0, day_of_week=1),  # Weekly on Monday at 10 AM
-#     },
-# }
+# =============================================================================
+# MOBILE APP CONFIGURATIONS REMOVED
+# =============================================================================
+# Firebase push notifications, Celery background tasks, and mobile-specific
+# configurations have been removed as part of the website/admin extraction.
+# See CLEANUP_SUMMARY.md for details.
+
 USDA_API_KEY = os.getenv("USDA_API_KEY")
 
 # Google Custom Search API for blog search
-GOOGLE_CUSTOM_SEARCH_ENGINE_ID="a2e3976c052734bb6"
-GOOGLE_CUSTOM_SEARCH_API_KEY = "AIzaSyA1CElXL4vN8KxaPgEw0NGqWJGzuWZecm4"
+GOOGLE_CUSTOM_SEARCH_ENGINE_ID = os.getenv("GOOGLE_CUSTOM_SEARCH_ENGINE_ID", "a2e3976c052734bb6")
+GOOGLE_CUSTOM_SEARCH_API_KEY = os.getenv("GOOGLE_CUSTOM_SEARCH_API_KEY")
 
 # YouTube Data API for video search
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")

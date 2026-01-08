@@ -1,0 +1,37 @@
+# IngredientIQ Security Contact Information
+# https://www.ingredientiq.ai/.well-known/security.txt
+# This file follows the security.txt standard (RFC 9116)
+# 
+# Founded by Quentien Brewington and Tammy Brewington
+# "Deterministic rules first. ML signals second. Real-time explainability at checkout."
+
+# Security contact for vulnerability reports
+Contact: mailto:admin@ingredientiq.ai
+Contact: https://www.ingredientiq.ai/contact
+
+# Organization Information
+# Ingredient IQ LLC
+# PO BOX 102, Frankfort, IL 60423-9998
+# Quentien Brewington, PMP, CAPM, DTM — Founder & CEO
+# Tammy Brewington — Co-Founder & Director of Human-Centered Operations
+
+# PGP Key for encrypted communications (optional - add when available)
+# Encryption: https://www.ingredientiq.ai/.well-known/pgp-key.txt
+
+# Our security policy
+Policy: https://www.ingredientiq.ai/security-policy
+
+# Preferred languages for security reports
+Preferred-Languages: en
+
+# Canonical URL for this file
+Canonical: https://www.ingredientiq.ai/.well-known/security.txt
+
+# When this file expires and should be refreshed
+Expires: 2027-01-08T00:00:00.000Z
+
+# Acknowledgments page for security researchers
+# Acknowledgments: https://www.ingredientiq.ai/security-acknowledgments
+
+# Hiring security researchers
+# Hiring: https://www.ingredientiq.ai/careers

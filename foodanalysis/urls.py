@@ -23,9 +23,19 @@ from django.conf.urls.static import static
 from django.http import HttpResponse, FileResponse
 import os
 from django.views.generic import TemplateView
+
+# =============================================================================
+# Frontend Asset Paths Configuration
+# =============================================================================
+# Organized structure: frontend/website/ and frontend/admin/
+
+WEBSITE_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'website')
+ADMIN_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'admin')
+
+
 def serve_react_app(request, path=None):
     """Serve the React app's index.html for all routes"""
-    build_path = os.path.join(settings.BASE_DIR, 'build', 'index.html')
+    build_path = os.path.join(WEBSITE_BUILD_PATH, 'index.html')
     try:
         with open(build_path, 'r') as f:
             content = f.read()
@@ -35,7 +45,7 @@ def serve_react_app(request, path=None):
 
 def serve_react_admin_panel(request, path=None):
     """Serve the React admin panel's index.html for all routes"""
-    build_path = os.path.join(settings.BASE_DIR, 'react_admin', 'index.html')
+    build_path = os.path.join(ADMIN_BUILD_PATH, 'index.html')
     try:
         with open(build_path, 'r') as f:
             content = f.read()
@@ -47,7 +57,7 @@ def serve_build_static(request, path):
     """Serve static files from the React build folder"""
     # The path comes as 'css/main.48ab48a6.css' or 'js/main.832bbcc1.js'
     # We need to construct the full path to build/static/
-    file_path = os.path.join(settings.BASE_DIR, 'build', 'static', path)
+    file_path = os.path.join(WEBSITE_BUILD_PATH, 'static', path)
     
     if os.path.exists(file_path):
         # Determine content type based on file extension
@@ -71,8 +81,8 @@ def serve_build_static(request, path):
 def serve_admin_static(request, path):
     """Serve static files from the React admin panel build folder"""
     # The path comes as 'css/main.48ab48a6.css' or 'js/main.832bbcc1.js'
-    # We need to construct the full path to react_admin/static/
-    file_path = os.path.join(settings.BASE_DIR, 'react_admin', 'static', path)
+    # We need to construct the full path to admin panel static/
+    file_path = os.path.join(ADMIN_BUILD_PATH, 'static', path)
     
     if os.path.exists(file_path):
         # Determine content type based on file extension
@@ -95,13 +105,26 @@ def serve_admin_static(request, path):
 
 def serve_logo(request, filename):
     """Serve logo files from the React build folder"""
-    file_path = os.path.join(settings.BASE_DIR, 'build', filename)
+    file_path = os.path.join(WEBSITE_BUILD_PATH, filename)
     if os.path.exists(file_path):
         return FileResponse(open(file_path, 'rb'), content_type='image/png')
     else:
         return HttpResponse('Logo not found', status=404)
 
+def health_check(request):
+    """Health check endpoint for Railway deployment"""
+    from django.db import connection
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        return HttpResponse('{"status": "healthy", "database": "connected"}', content_type='application/json')
+    except Exception as e:
+        return HttpResponse(f'{{"status": "unhealthy", "error": "{str(e)}"}}', content_type='application/json', status=500)
+
 urlpatterns = [
+    # Health check for Railway
+    path('api/health/', health_check, name='health-check'),
+    
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
     path('foodapp/',include('foodinfo.urls')),
@@ -116,24 +139,30 @@ urlpatterns = [
     path('admin/css/<path:path>', serve_admin_static, name='admin-css'),
     path('admin/js/<path:path>', serve_admin_static, name='admin-js'),
     path('admin/images/<path:path>', serve_admin_static, name='admin-images'),
-    path('admin/manifest.json', lambda request: serve(request, 'manifest.json', document_root=os.path.join(settings.BASE_DIR, 'react_admin'))),
+    path('admin/manifest.json', lambda request: serve(request, 'manifest.json', document_root=ADMIN_BUILD_PATH)),
     
     # Serve static files from build folder - HIGH PRIORITY
-    # Handle all static file requests from React build
-    path('static/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'static'))),
-    path('assets/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'static'))),
-    path('css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'css'))),
-    path('js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'js'))),
-    path('images/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'images'))),
-    path('manifest.json', lambda request: serve(request, 'manifest.json', document_root=os.path.join(settings.BASE_DIR, 'build'))),
-    path('robots.txt', lambda request: serve(request, 'robots.txt', document_root=os.path.join(settings.BASE_DIR, 'build'))),
+    # Handle all static file requests from React build (uses new frontend paths with fallback)
+    path('static/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static'))),
+    path('assets/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static'))),
+    path('css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'css'))),
+    path('js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'js'))),
+    path('images/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'images'))),
+    path('manifest.json', lambda request: serve(request, 'manifest.json', document_root=WEBSITE_BUILD_PATH)),
+    path('robots.txt', lambda request: serve(request, 'robots.txt', document_root=WEBSITE_BUILD_PATH)),
     path('logo192.png', lambda request: serve_logo(request, 'logo192.png')),
     path('logo512.png', lambda request: serve_logo(request, 'logo512.png')),
     
+    # SEO & Discovery Files (NEW)
+    path('sitemap.xml', lambda request: serve(request, 'sitemap.xml', document_root=WEBSITE_BUILD_PATH)),
+    path('llms.txt', lambda request: serve(request, 'llms.txt', document_root=WEBSITE_BUILD_PATH)),
+    path('humans.txt', lambda request: serve(request, 'humans.txt', document_root=WEBSITE_BUILD_PATH)),
+    path('.well-known/security.txt', lambda request: serve(request, 'security.txt', document_root=os.path.join(WEBSITE_BUILD_PATH, '.well-known'))),
+    
     # Serve React build static files with correct paths
-    path('static/css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'static', 'css'))),
-    path('static/js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'static', 'js'))),
-    path('static/media/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(settings.BASE_DIR, 'build', 'static', 'media'))),
+    path('static/css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static', 'css'))),
+    path('static/js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static', 'js'))),
+    path('static/media/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static', 'media'))),
     
     # Control panel static files - HIGH PRIORITY (must come before main app static files)
     path('control-panel/static/<path:path>', serve_admin_static, name='control-panel-static'),
@@ -141,7 +170,7 @@ urlpatterns = [
     path('control-panel/css/<path:path>', serve_admin_static, name='control-panel-css'),
     path('control-panel/js/<path:path>', serve_admin_static, name='control-panel-js'),
     path('control-panel/images/<path:path>', serve_admin_static, name='control-panel-images'),
-    path('control-panel/manifest.json', lambda request: serve(request, 'manifest.json', document_root=os.path.join(settings.BASE_DIR, 'react_admin'))),
+    path('control-panel/manifest.json', lambda request: serve(request, 'manifest.json', document_root=ADMIN_BUILD_PATH)),
     
     # React admin panel - moved to /adminpanel/ to avoid conflict with Django admin
     path('control-panel/', serve_react_admin_panel, name='react-admin-panel'),

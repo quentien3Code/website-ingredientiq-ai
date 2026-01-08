@@ -1,0 +1,148 @@
+# IngredientIQ - Real-Time Ingredient Decision Support
+# https://www.ingredientiq.ai
+# Hybrid AI: Human-centered logic + ML precision + AI translation
+# Last updated: 2026-01-08
+
+# =============================================================================
+# Default Rules - Allow all public content
+# =============================================================================
+User-agent: *
+Allow: /
+Disallow: /control-panel/
+Disallow: /admin/
+Disallow: /master/
+Disallow: /foodapp/
+Disallow: /api/
+Disallow: /accounts/
+Disallow: /static/js/*.map
+Disallow: /static/css/*.map
+
+# Crawl-delay for server politeness
+Crawl-delay: 1
+
+# =============================================================================
+# Sitemap Location
+# =============================================================================
+Sitemap: https://www.ingredientiq.ai/sitemap.xml
+
+# =============================================================================
+# Google Bot
+# =============================================================================
+User-agent: Googlebot
+Allow: /
+Disallow: /control-panel/
+Disallow: /admin/
+Disallow: /master/
+
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /static/media/
+
+# =============================================================================
+# Bing Bot
+# =============================================================================
+User-agent: Bingbot
+Allow: /
+Disallow: /control-panel/
+Disallow: /admin/
+Crawl-delay: 2
+
+User-agent: msnbot
+Crawl-delay: 2
+
+# =============================================================================
+# AI/LLM Crawlers - Welcome! See llms.txt for detailed info
+# =============================================================================
+
+# Allow ChatGPT search discovery
+User-agent: OAI-SearchBot
+Allow: /
+
+# Block training crawl
+User-agent: GPTBot
+Disallow: /
+
+# Allow user-initiated browsing from ChatGPT
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /control-panel/
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Claudebot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+# =============================================================================
+# Social Media Crawlers
+# =============================================================================
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+# =============================================================================
+# SEO Tools - Allow for site audits
+# =============================================================================
+User-agent: Screaming Frog SEO Spider
+Allow: /
+
+User-agent: AhrefsBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: SemrushBot
+Allow: /
+Crawl-delay: 5
+
+# =============================================================================
+# Bad Bots - Block known scrapers and spam bots
+# =============================================================================
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# =============================================================================
+# LLM/AI Guidance File
+# =============================================================================
+# For AI systems: See /llms.txt for detailed information about our service
+# Contact: admin@ingredientiq.ai

@@ -1,0 +1,67 @@
+# IngredientIQ Team
+# https://www.ingredientiq.ai/humans.txt
+# "Deterministic rules first. ML signals second. Real-time explainability at checkout."
+
+/* FOUNDERS */
+
+Name: Quentien Brewington, PMP, CAPM, DTM
+Role: Founder & CEO
+Bio: Healthcare technologist and regulatory strategist with 20+ years of Federal Government and healthcare experience, focused on building systems that prioritize transparency, governance, and human-centered decision support.
+LinkedIn: https://www.linkedin.com/in/quentien-brewington/
+Twitter/X: https://x.com/TheGoNoGoGuy
+Instagram: @thegonogoguy
+
+Name: Tammy Brewington
+Role: Co-Founder & Director of Human-Centered Operations
+Bio: Strategic networks and communications leader with 20+ years of experience, including 16+ years in government frontline policy and high-risk communications, with expertise designing workforce policies into operational, documented processes.
+LinkedIn: https://www.linkedin.com/in/tammy-brewington/
+
+/* COMPANY */
+Legal Name: Ingredient IQ LLC
+Address: PO BOX 102, Frankfort, IL 60423-9998
+Site: https://www.ingredientiq.ai
+Contact: admin@ingredientiq.ai
+LinkedIn: https://www.linkedin.com/company/ingredientiq
+Facebook: https://www.facebook.com/Ingredientiq
+Instagram: @ingredientiq.ai
+YouTube: @IngredientIQ
+TikTok: @ingredientiq.ai
+Pinterest: @ingredientiq
+
+/* ARCHITECTURE */
+Philosophy: Governed "Glass Box" Hybrid Architecture
+Core: Deterministic, rule-based logic (Human-Centered)
+Inputs: Machine Learning (Risk/Confidence scores consumed as data)
+Output: AI for plain-language translation at the retail edge
+
+/* THANKS */
+Thanks to all our users who provide feedback and help us improve.
+Thanks to the open-source community for the amazing tools we use.
+
+/* TECHNOLOGY */
+Platform: Django, React
+Backend: Python, Django REST Framework
+Frontend: React, Bootstrap, GSAP
+Database: PostgreSQL
+Hosting: Railway
+CDN: Cloudflare
+Authentication: JWT, OAuth2
+
+/* STANDARDS */
+HTML5, CSS3, JavaScript ES6+
+Responsive Design
+WCAG 2.1 Accessibility
+Schema.org Structured Data
+Open Graph Protocol
+Twitter Cards
+
+/* DATA SOURCES */
+FDA Food Additive Status List
+USDA FoodData Central
+European Food Safety Authority (EFSA)
+PubMed Clinical Research
+Codex Alimentarius
+JECFA
+
+/* LAST UPDATE */
+2026-01-08

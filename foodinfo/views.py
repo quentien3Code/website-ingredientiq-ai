@@ -26,7 +26,7 @@ from .models import FoodLabelScan, MonthlyScanUsage, Termandcondition, User, Use
 from panel.models import OnboardingQuestion, OnboardingChoice, OnboardingAnswer
 from .enhanced_ai_analysis import EnhancedAIAnalysis
 from .performance_optimization import PerformanceOptimizer
-from .barcode_scanner_optimization import BarcodeScannerOptimizer
+# Mobile-specific imports removed: barcode_scanner_optimization, scan_limit, tasks
 from .ssl_fix import get_ssl_connector
 from .confidence_engine import ConfidenceEngine
 from django.core.mail import send_mail
@@ -10813,6 +10813,7 @@ class BarcodeView(APIView):
                 "bluf_insight": "",
                 "main_explanation": "",
                 "deeper_reference": "",
+                "disclaimer": "Informational, not diagnostic. Consult healthcare providers for medical advice.",
                 "audit_log": {},
                 "word_counts": {}
             },
@@ -16868,6 +16869,7 @@ class FoodLabelNutritionView(APIView):
                 "bluf_insight": "",
                 "main_explanation": "",
                 "deeper_reference": "",
+                "disclaimer": "Informational, not diagnostic. Consult healthcare providers for medical advice.",
                 "audit_log": {},
                 "word_counts": {}
             },
@@ -18273,6 +18275,7 @@ Do not add sections or commentary. Keep total ≤ 340 words."""
                 "bluf_insight": bluf_insight,
                 "main_explanation": main_explanation,
                 "deeper_reference": deeper_reference,
+                "disclaimer": "Informational, not diagnostic. Consult healthcare providers for medical advice.",
                 "audit_log": audit_log,
                 "word_counts": {
                     "bluf_insight": bluf_words,
@@ -18344,6 +18347,7 @@ Do not add sections or commentary. Keep total ≤ 340 words."""
             "bluf_insight": bluf_insight,
             "main_explanation": main_explanation,
             "deeper_reference": deeper_reference,
+            "disclaimer": "Informational, not diagnostic. Consult healthcare providers for medical advice.",
             "audit_log": audit_log,
             "word_counts": {
                 "bluf_insight": len(bluf_insight.split()),
