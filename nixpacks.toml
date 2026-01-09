@@ -4,7 +4,7 @@ nixPkgs = [
   "python311",
   
   # Core Django stack
-  "python311Packages.django_4",
+  "python311Packages.django",
   "python311Packages.djangorestframework",
   "python311Packages.djangorestframework-simplejwt",
   "python311Packages.pyjwt",
