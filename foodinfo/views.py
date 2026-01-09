@@ -84,7 +84,7 @@ openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
 USE_STATIC_INGREDIENT_SAFETY = False    
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 # import feedparser  # For Medium RSS feeds
-client = OpenAI(api_key="OPENAI_API_KEY_REMOVED")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 BASE_URL = "https://api.spoonacular.com"
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/"
 OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v0/product/"
@@ -101,7 +101,7 @@ WHO_SEARCH_URL = "https://www.who.int/search?q="
 WIKIPEDIA_LINKS_API = "https://en.wikipedia.org/w/api.php"
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-# openai.api_key = "OPENAI_API_KEY_REMOVED"
+# openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Singleton EasyOCR reader and GPU check
 # _easyocr_reader = None
@@ -6078,12 +6078,12 @@ class IngredientFullDataView(APIView):
             
             # Call OpenAI API
             from django.conf import settings
-            client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', 'OPENAI_API_KEY_REMOVED'))
+            client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', os.getenv('OPENAI_API_KEY')))
             
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a food safety expert who analyzes ingredients for personalized safety recommendations. Always respond with valid JSON."},
+                    {"role": "system", "content": "You are a food safety expert who analyzes ingredients for personalized safety recommendations. Always respond with valid JSON."}, 
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=500,
@@ -6268,12 +6268,12 @@ class IngredientFullDataView(APIView):
             
             # Call OpenAI API
             from django.conf import settings
-            client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', 'OPENAI_API_KEY_REMOVED'))
+            client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', os.getenv('OPENAI_API_KEY')))
             
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a medical nutritionist who analyzes ingredient risks for personalized health recommendations. Always respond with valid JSON."},
+                    {"role": "system", "content": "You are a medical nutritionist who analyzes ingredient risks for personalized health recommendations. Always respond with valid JSON."}, 
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=400,
@@ -7914,7 +7914,7 @@ def stripe_webhook_view(request):
 
     return HttpResponse(status=200)
 
-openai.api_key = "OPENAI_API_KEY_REMOVED"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # class IngredientLLMView(APIView):
 #     def get(self, request):

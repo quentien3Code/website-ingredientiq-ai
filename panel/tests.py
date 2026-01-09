@@ -4,8 +4,8 @@ from django.test import TestCase
 import os
 from twilio.rest import Client
 
-account_sid = 'TWILIO_ACCOUNT_SID_REMOVED'
-auth_token = 'TWILIO_AUTH_TOKEN_REMOVED'
+account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+auth_token = os.getenv('TWILIO_AUTH_TOKEN')
 client = Client(account_sid, auth_token)
 
 message = client.messages.create(
