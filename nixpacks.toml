@@ -1,9 +1,8 @@
 # Nixpacks configuration for Railway deployment
-[phases.setup]
-nixPkgs = ["python311", "python311Packages.pip", "gcc"]
+# Let Nixpacks auto-detect Python from requirements.txt
 
-[phases.install]
-cmds = ["python3 -m pip install -r requirements.txt"]
+[phases.setup]
+nixPkgs = ["gcc", "zlib", "libjpeg", "libpng"]
 
 [start]
 cmd = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
