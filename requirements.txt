@@ -15,3 +15,4 @@ djangorestframework-simplejwt
 fuzzywuzzy
 beautifulsoup4
 Pillow
+dj-database-url
