@@ -1,9 +1,9 @@
 # nixpacks.toml
-# Railway / Nixpacks: make the runtime deterministic.
-# - We skip Nixpacks' auto Python dependency install.
-# - We create our own venv at /opt/venv.
-# - We install requirements.txt into that venv.
-# - We run Django + Gunicorn explicitly from /opt/venv/bin.
+# Railway / Nixpacks deterministic Python env:
+# - Install python + pip from Nix
+# - Create venv at /opt/venv
+# - Install requirements into venv
+# - Run everything from /opt/venv/bin
 
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.11"
@@ -13,27 +13,28 @@ PYTHONDONTWRITEBYTECODE = "1"
 
 [phases.setup]
 nixPkgs = [
-  # Python runtime
+  # Python runtime + tools
   "python311",
+  "python311Packages.pip",
+  "python311Packages.virtualenv",
 
-  # Helpful for building any dependency that falls back to source
+  # Build helpers (safe)
   "gcc",
   "pkg-config",
 
-  # Common system libs needed by image/crypto stacks (safe + lightweight)
+  # Common native libs used by Pillow/crypto and similar
   "openssl",
   "libffi",
   "zlib",
   "libjpeg",
   "libpng",
 
-  # If anything still touches OpenCV / GUI-linked libs at runtime
+  # If anything links to OpenCV/GL
   "libGL",
   "libGLU",
   "glib"
 ]
 
-# Ensure runtime can find shared libraries (libGL.so.1, etc.)
 nixLibs = [
   "openssl",
   "libffi",
@@ -48,9 +49,8 @@ nixLibs = [
 [phases.install]
 cmds = [
   "python -m venv --copies /opt/venv",
-  ". /opt/venv/bin/activate",
-  "python -m pip install --upgrade pip",
-  "pip install -r requirements.txt"
+  "/opt/venv/bin/python -m pip install --upgrade pip",
+  "/opt/venv/bin/pip install -r requirements.txt"
 ]
 
 [start]
