@@ -2,7 +2,6 @@
 nixPkgs = [
   "python311",
   "python311Packages.pip",
-  "python311Packages.pillow",
   "libGL",
   "libGLU",
   "glib",
@@ -13,10 +12,10 @@ nixPkgs = [
 
 [phases.install]
 cmds = [
-  "python -m venv /app/venv",
-  "/app/venv/bin/pip install --upgrade pip",
-  "/app/venv/bin/pip install -r requirements.txt"
+  "python -m venv .venv",
+  ".venv/bin/pip install --upgrade pip",
+  ".venv/bin/pip install -r requirements.txt"
 ]
 
 [start]
-cmd = "/app/venv/bin/python manage.py collectstatic --noinput && /app/venv/bin/python manage.py migrate --noinput && /app/venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = ".venv/bin/python manage.py collectstatic --noinput && .venv/bin/python manage.py migrate --noinput && .venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
