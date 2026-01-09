@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 
 from panel.models import OnboardingQuestion
-from .models import FAQ, AboutUS, Termandcondition, User,UserHealthPreference, privacypolicy, FoodLabelScan, Feedback, DepartmentContact, DeviceToken, NotificationTemplate, PushNotification, AppVersion
+from .models import FAQ, AboutUS, Termandcondition, User, UserHealthPreference, privacypolicy, FoodLabelScan, Feedback, DepartmentContact
 from django.views.decorators.csrf import csrf_exempt
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -377,134 +377,8 @@ class DepartmentContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = DepartmentContact
         fields = ['id', 'department', 'department_display', 'contact_name', 'phone_number', 'email', 'available_hours', 'description', 'is_active']
-class DeviceTokenSerializer(serializers.ModelSerializer):
-    """Serializer for device token registration"""
-    
-    class Meta:
-        model = DeviceToken
-        fields = ['token', 'platform']
-    
-    def create(self, validated_data):
-        # Get user from request context
-        user = self.context['request'].user
-        validated_data['user'] = user
-        
-        # Update or create device token
-        device_token, created = DeviceToken.objects.update_or_create(
-            user=user,
-            token=validated_data['token'],
-            defaults={
-                'platform': validated_data['platform'],
-                'is_active': True
-            }
-        )
-        return device_token
 
-class NotificationTemplateSerializer(serializers.ModelSerializer):
-    """Serializer for notification templates"""
-    
-    notification_type_display = serializers.CharField(source='get_notification_type_display', read_only=True)
-    
-    class Meta:
-        model = NotificationTemplate
-        fields = [
-            'id', 'notification_type', 'notification_type_display', 
-            'title', 'body', 'icon', 'action_url', 'is_active',
-            'created_at', 'updated_at'
-        ]
-
-class PushNotificationSerializer(serializers.ModelSerializer):
-    """Serializer for push notification logs"""
-    
-    user_email = serializers.CharField(source='user.email', read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
-    class Meta:
-        model = PushNotification
-        fields = [
-            'id', 'user', 'user_email', 'notification_type', 
-            'title', 'body', 'status', 'status_display',
-            'firebase_message_id', 'error_message', 
-            'sent_at', 'created_at'
-        ]
-
-class AppVersionSerializer(serializers.ModelSerializer):
-    """Serializer for app versions"""
-    
-    platform_display = serializers.CharField(source='get_platform_display', read_only=True)
-    
-    class Meta:
-        model = AppVersion
-        fields = [
-            'id', 'platform', 'platform_display', 'version', 
-            'build_number', 'release_notes', 'is_critical_update',
-            'is_current', 'released_at'
-        ]
-
-class CustomNotificationSerializer(serializers.Serializer):
-    """Serializer for sending custom notifications"""
-    
-    user_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        help_text="List of user IDs to send notification to"
-    )
-    
-    # Template-based notification fields
-    template_type = serializers.CharField(
-        max_length=50, 
-        required=False,
-        help_text="Notification template type to use (optional)"
-    )
-    user_data = serializers.JSONField(
-        required=False, 
-        default=dict,
-        help_text="User data for template placeholder replacement"
-    )
-    
-    # Direct notification fields (required if not using template)
-    title = serializers.CharField(
-        max_length=100, 
-        required=False,
-        help_text="Notification title (required for direct notifications)"
-    )
-    body = serializers.CharField(
-        required=False,
-        help_text="Notification body (required for direct notifications)"
-    )
-    
-    # Optional fields
-    action_url = serializers.URLField(required=False, allow_blank=True)
-    data = serializers.JSONField(required=False, default=dict)
-    
-    def validate(self, data):
-        """
-        Validate that either template_type is provided OR title and body are provided
-        """
-        template_type = data.get('template_type')
-        title = data.get('title')
-        body = data.get('body')
-        
-        if template_type:
-            # Using template - title and body are optional
-            return data
-        elif title and body:
-            # Direct notification - template_type is optional
-            return data
-        else:
-            raise serializers.ValidationError(
-                "Either 'template_type' must be provided, OR both 'title' and 'body' must be provided"
-            )
-    
-    def validate_user_ids(self, value):
-        if not value:
-            raise serializers.ValidationError("At least one user ID is required")
-        
-        # Validate that all user IDs exist
-        existing_users = User.objects.filter(id__in=value).count()
-        if existing_users != len(value):
-            raise serializers.ValidationError("Some user IDs do not exist")
-        
-        return value
+# Mobile-specific serializers removed (DeviceToken, NotificationTemplate, PushNotification, AppVersion, CustomNotification)
 
 class NotificationSettingsSerializer(serializers.ModelSerializer):
     """Serializer for user notification settings"""

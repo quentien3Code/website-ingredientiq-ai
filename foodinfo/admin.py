@@ -2,97 +2,16 @@ from django.contrib import admin
 from .models import (
     FAQ, AboutUS, User, UserHealthPreference, privacypolicy, Termandcondition, 
     FoodLabelScan, StripeCustomer, UserSubscription, Feedback, DepartmentContact,
-    DeviceToken, NotificationTemplate, PushNotification, AppVersion, MonthlyScanUsage,AccountDeletionRequest,DownloadPDF  
+    MonthlyScanUsage, AccountDeletionRequest, DownloadPDF  
 )
 
-# Notification-related admin classes
-@admin.register(DeviceToken)
-class DeviceTokenAdmin(admin.ModelAdmin):
-    list_display = ['user', 'platform', 'is_active', 'created_at']
-    list_filter = ['platform', 'is_active', 'created_at']
-    search_fields = ['user__email', 'token']
-    readonly_fields = ['created_at', 'updated_at']
-
-@admin.register(NotificationTemplate)
-class NotificationTemplateAdmin(admin.ModelAdmin):
-    list_display = ['notification_type', 'title', 'is_active', 'created_at']
-    list_filter = ['notification_type', 'is_active', 'created_at']
-    search_fields = ['title', 'body']
-    readonly_fields = ['created_at', 'updated_at']
-
-@admin.register(PushNotification)
-class PushNotificationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'notification_type', 'title', 'status', 'created_at']
-    list_filter = ['notification_type', 'status', 'created_at']
-    search_fields = ['user__email', 'title', 'body']
-    readonly_fields = ['created_at', 'sent_at', 'firebase_message_id']
-    
-    def has_add_permission(self, request):
-        return False
-    
-    def has_change_permission(self, request, obj=None):
-        return False
-
-@admin.register(AppVersion)
-class AppVersionAdmin(admin.ModelAdmin):
-    list_display = ['platform', 'version', 'is_current', 'is_critical_update', 'released_at']
-    list_filter = ['platform', 'is_current', 'is_critical_update', 'released_at']
-    search_fields = ['version', 'release_notes']
-    readonly_fields = ['released_at']
-    
-    def save_model(self, request, obj, form, change):
-        if obj.is_current:
-            AppVersion.objects.filter(
-                platform=obj.platform,
-                is_current=True
-            ).exclude(id=obj.id).update(is_current=False)
-        
-        super().save_model(request, obj, form, change)
-        
-        if obj.is_current:
-            from .tasks import send_app_update_notifications_task, safe_execute_task
-            safe_execute_task(send_app_update_notifications_task, platform=obj.platform)
-
-# Enhanced User admin with notification actions
-class UserAdminWithNotifications(admin.ModelAdmin):
-    actions = ['send_test_notification', 'send_welcome_notification']
+# Simple User admin (mobile notification features removed)
+class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'full_name', 'notifications_enabled', 'subscription_plan', 'date_joined']
     list_filter = ['notifications_enabled', 'subscription_plan', 'is_active']
     search_fields = ['email', 'full_name']
-    
-    def send_test_notification(self, request, queryset):
-        from .firebase_service import firebase_service
-        
-        count = 0
-        for user in queryset:
-            result = firebase_service.send_notification(
-                user_id=user.id,
-                title="Test Notification",
-                body=f"Hello {user.full_name}! This is a test notification.",
-                notification_type='custom'
-            )
-            if result['success']:
-                count += 1
-        
-        self.message_user(request, f"Test notification sent to {count} users.")
-    
-    def send_welcome_notification(self, request, queryset):
-        from .tasks import send_welcome_notification_task_celery, safe_execute_task
-        
-        count = 0
-        for user in queryset:
-            result = safe_execute_task(send_welcome_notification_task_celery, user.id)
-            if result and result.get('success'):
-                count += 1
-        
-        self.message_user(request, f"Welcome notifications sent to {count} users.")
-    
-    send_test_notification.short_description = "Send test notification"
-    send_welcome_notification.short_description = "Send welcome notification"
 
-# Unregister default User admin and register enhanced version
-# admin.site.unregister(User)
-admin.site.register(User, UserAdminWithNotifications)
+admin.site.register(User, UserAdmin)
 admin.site.register(DepartmentContact)
 
 admin.site.register(Feedback)

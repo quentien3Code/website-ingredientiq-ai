@@ -325,18 +325,8 @@ ACCOUNT_SIGNUP_REDIRECT_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
-
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
-STRIPE_MONTHLY_PRICE_ID = "price_1RCJv1Qu1wso2WoQmk9rp5J4"
-STRIPE_MONTHLY_DISCOUNTED_PRICE_ID = os.getenv("STRIPE_MONTHLY_DISCOUNTED_PRICE_ID", "price_1S2F1aQu1wso2WoQc6dJkXvv")  # 50% off price ID
-STRIPE_YEARLY_PRICE_ID = os.getenv("STRIPE_YEARLY_PRICE_ID")
-STRIPE_YEARLY_DISCOUNTED_PRICE_ID = os.getenv("STRIPE_YEARLY_DISCOUNTED_PRICE_ID","price_1S25S8Qu1wso2WoQquwNlfqx")  # 50% off yearly price ID
-STRIPE_WEBHOOK_SECRET  = os.getenv("STRIPE_WEBHOOK_SECRET ")
-
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+# Third-party integrations removed (Stripe, Twilio, OpenAI, Firebase)
+# Mobile app project terminated - only website/admin panel remains
 
 # =============================================================================
 # CORS & CSRF Configuration for Railway + ingredientiq.ai

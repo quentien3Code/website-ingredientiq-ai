@@ -178,8 +178,6 @@ class UserSubscription(models.Model):
     ]
     PLATFORM_CHOICES = [
         ('stripe', 'Stripe/Web'),
-        ('ios', 'iOS App Store'),
-        ('android', 'Google Play'),
     ]
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -200,10 +198,6 @@ class UserSubscription(models.Model):
     current_period_end = models.DateTimeField(null=True, blank=True)
     cancel_at_period_end = models.BooleanField(default=False)
     cancel_at = models.DateTimeField(null=True, blank=True)
-    
-    # Store-specific fields
-    app_store_transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    google_play_purchase_token = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.full_name} - {self.plan_name} - {self.premium_type} ({self.platform})"
@@ -317,104 +311,9 @@ class DepartmentContact(models.Model):
     def __str__(self):
         return f"{self.get_department_display()} - {self.contact_name}"
 
-class DeviceToken(models.Model):
-    """Store FCM device tokens for push notifications"""
-    PLATFORM_CHOICES = [
-        ('ios', 'iOS'),
-        ('android', 'Android'),
-        ('web', 'Web'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='device_tokens')
-    token = models.TextField(unique=True)
-    platform = models.CharField(max_length=10, choices=PLATFORM_CHOICES)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ['user', 'token']
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.platform} - {self.token[:20]}..."
+# Mobile-specific models removed (DeviceToken, NotificationTemplate, PushNotification, AppVersion)
+# These were for push notifications in the mobile app which is now discontinued
 
-class NotificationTemplate(models.Model):
-    """Templates for different types of notifications"""
-    NOTIFICATION_TYPES = [
-        ('welcome', 'Welcome Message'),
-        ('subscription_purchased', 'Subscription Purchased'),
-        ('subscription_expiring', 'Subscription Expiring'),
-        ('subscription_expired', 'Subscription Expired'),
-        ('subscription_cancelled', 'Subscription Cancelled'),
-        ('subscription_upgraded', 'Subscription Upgraded'),
-        ('subscription_downgraded', 'Subscription Downgraded'),
-        ('limit_warning', 'Limit Warning'),
-        ('app_update', 'App Update Available'),
-        ('feature_reminder', 'Feature Reminder'),
-        ('promotional', 'Promotional'),
-        ('engagement', 'Engagement'),
-        ('custom', 'Custom Notification'),
-    ]
-    
-    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES, unique=True)
-    title = models.CharField(max_length=100)
-    body = models.TextField()
-    icon = models.CharField(max_length=100, blank=True, null=True)
-    action_url = models.URLField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.get_notification_type_display()} - {self.title}"
-
-class PushNotification(models.Model):
-    """Log of sent push notifications"""
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
-        ('delivered', 'Delivered'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    notification_type = models.CharField(max_length=30)
-    title = models.CharField(max_length=100)
-    body = models.TextField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    firebase_message_id = models.CharField(max_length=100, blank=True, null=True)
-    error_message = models.TextField(blank=True, null=True)
-    sent_at = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.title} - {self.status}"
-
-class AppVersion(models.Model):
-    """Track app versions for update notifications"""
-    PLATFORM_CHOICES = [
-        ('ios', 'iOS'),
-        ('android', 'Android'),
-        ('web', 'Web'),
-    ]
-    
-    platform = models.CharField(max_length=10, choices=PLATFORM_CHOICES)
-    version = models.CharField(max_length=20)
-    build_number = models.CharField(max_length=20, blank=True, null=True)
-    release_notes = models.TextField(blank=True, null=True)
-    is_critical_update = models.BooleanField(default=False)
-    is_current = models.BooleanField(default=False)
-    released_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ['platform', 'version']
-        ordering = ['-released_at']
-    
-    def __str__(self):
-        return f"{self.platform} - v{self.version}"
 
 # Django signals to automatically sync scan counts
 from django.db.models.signals import post_save, post_delete

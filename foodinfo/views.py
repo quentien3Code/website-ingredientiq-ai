@@ -13,13 +13,6 @@ ssl_context.verify_mode = ssl.CERT_NONE
 from botocore.exceptions import ClientError, NoCredentialsError
 from django.utils import timezone
 from datetime import timedelta
-# openai import is optional - app works without it
-try:
-    import openai
-    OPENAI_AVAILABLE = True
-except ImportError:
-    openai = None
-    OPENAI_AVAILABLE = False
 import hashlib
 import threading
 from rest_framework.views import APIView
@@ -28,11 +21,11 @@ from rest_framework import status
 from fuzzywuzzy import fuzz
 from django.contrib.auth import login
 from .serializers import FAQSerializer, AboutSerializer, AllergenDietaryCheckSerializer, FAQSerializer, SignupSerializer, LoginSerializer, ForgotPasswordRequestSerializer, UpdateUserProfileSerializer, UserSettingsSerializer, VerifyOTPSerializer,ChangePasswordSerializer,HealthPreferenceSerializer, privacypolicySerializer, termsandconditionSerializer, userGetSerializer, userPatchSerializer, FoodLabelScanSerializer, FeedbackSerializer, LoveAppSerializer, DepartmentContactSerializer, NotificationToggleSerializer
-from .models import FoodLabelScan, MonthlyScanUsage, Termandcondition, User, UserSubscription, privacypolicy, AboutUS, FAQ,StripeCustomer, Feedback, DepartmentContact, AccountDeletionRequest, DownloadPDF, DownloadRequest
+from .models import FoodLabelScan, MonthlyScanUsage, Termandcondition, User, UserSubscription, privacypolicy, AboutUS, FAQ, StripeCustomer, Feedback, DepartmentContact, AccountDeletionRequest, DownloadPDF, DownloadRequest
 from panel.models import OnboardingQuestion, OnboardingChoice, OnboardingAnswer
 from .enhanced_ai_analysis import EnhancedAIAnalysis
 from .performance_optimization import PerformanceOptimizer
-# Mobile-specific imports removed: barcode_scanner_optimization, scan_limit, tasks
+# Mobile-specific imports removed: barcode_scanner_optimization, scan_limit, tasks, send_sms
 from .ssl_fix import get_ssl_connector
 from .confidence_engine import ConfidenceEngine
 from django.core.mail import send_mail
@@ -41,17 +34,13 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissions import IsSuperAdmin
-# from paddleocr import PaddleOCR
 import re
-# import easyocr
 from io import BytesIO
-# from .apps import YourAppConfig
 from django.http import HttpResponse
 import asyncio
 import aiohttp
 import numpy as np
-from .utils import get_comprehensive_discount_info, send_sms, is_eligible_for_new_user_discount, get_discount_info, get_subscription_prices
-# from .utils import extract_nutrition_info_from_text
+from .utils import get_comprehensive_discount_info, is_eligible_for_new_user_discount, get_discount_info, get_subscription_prices
 from PIL import Image
 from foodanalysis import settings
 import os
@@ -70,47 +59,21 @@ import uuid
 from django.core.files.base import ContentFile
 import requests
 from django.core.files.storage import default_storage
-# from allauth.socialaccount.models import SocialApp
 from django.shortcuts import redirect
 from pytrends.request import TrendReq
 from geopy.geocoders import Nominatim
 from collections import Counter
 from geopy.exc import GeocoderTimedOut
 from django.core.cache import cache 
-import stripe
 from .utils import fetch_llm_insight, fetch_medlineplus_summary, fetch_pubchem_toxicology_summary, fetch_pubmed_articles, fetch_efsa_openfoodtox_data, fetch_efsa_ingredient_summary, fetch_fsa_hygiene_rating, fetch_fsa_hygiene_summary, search_fsa_establishments_by_product, fetch_snomed_ct_data, fetch_icd10_data, get_medical_condition_food_recommendations
 from asgiref.sync import sync_to_async
 from django.views.decorators.csrf import csrf_exempt
 import aiohttp
 import asyncio
-# import concurrent.futures
-# OpenAI import is optional
-try:
-    from openai import OpenAI
-except ImportError:
-    OpenAI = None
-# from .openfoodfacts_api import openfoodfacts_api
 openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
 USE_STATIC_INGREDIENT_SAFETY = False    
-# import feedparser  # For Medium RSS feeds
 
-# Lazy initialization for OpenAI client - only created when first used
-_openai_client = None
-
-def get_openai_client():
-    """Get or create OpenAI client with lazy initialization. Returns None if not available."""
-    global _openai_client
-    if OpenAI is None:
-        return None  # OpenAI not installed
-    if _openai_client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            return None  # No API key configured
-        _openai_client = OpenAI(api_key=api_key)
-    return _openai_client
-
-# For backward compatibility - use get_openai_client() in new code
-client = None  # Will be initialized lazily via get_openai_client()
+# No OpenAI or Stripe - third-party integrations removed for website-only deployment
 
 BASE_URL = "https://api.spoonacular.com"
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/"
@@ -127,7 +90,6 @@ WIKIPEDIA_SEARCH_API_URL = "https://en.wikipedia.org/w/api.php"
 WHO_SEARCH_URL = "https://www.who.int/search?q="
 WIKIPEDIA_LINKS_API = "https://en.wikipedia.org/w/api.php"
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Singleton EasyOCR reader and GPU check

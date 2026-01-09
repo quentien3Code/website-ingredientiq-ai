@@ -131,8 +131,6 @@ class AdminUserManagementView(APIView):
                     ("DELETE FROM foodinfo_foodlabelscan WHERE user_id = %s", [user_id]),
                     ("DELETE FROM foodinfo_feedback WHERE user_id = %s", [user_id]),
                     ("DELETE FROM foodinfo_monthlyscanusage WHERE user_id = %s", [user_id]),
-                    ("DELETE FROM foodinfo_pushnotification WHERE user_id = %s", [user_id]),
-                    ("DELETE FROM foodinfo_devicetoken WHERE user_id = %s", [user_id]),
                     ("DELETE FROM foodinfo_usersubscription WHERE user_id = %s", [user_id]),
                     ("DELETE FROM foodinfo_accountdeletionrequest WHERE user_id = %s", [user_id]),
                     ("DELETE FROM panel_onboardinganswer WHERE user_id = %s", [user_id]),
