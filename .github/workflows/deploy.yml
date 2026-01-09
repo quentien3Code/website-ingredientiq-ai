@@ -32,7 +32,7 @@ jobs:
         run: |
           python manage.py check --deploy
         env:
-          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          DJANGO_SECRET_KEY: 'test-ci-key-with-sufficient-length-and-complexity-12345!@#$%'
           DEBUG: 'False'
           ALLOWED_HOSTS: 'localhost'
           
