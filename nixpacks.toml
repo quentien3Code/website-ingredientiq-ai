@@ -54,4 +54,4 @@ cmds = [
 ]
 
 [start]
-cmd = "/opt/venv/bin/python manage.py collectstatic --noinput && /opt/venv/bin/python manage.py migrate --noinput && /opt/venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "chmod +x start.sh && ./start.sh"
