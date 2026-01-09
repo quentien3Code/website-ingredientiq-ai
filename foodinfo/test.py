@@ -67,22 +67,23 @@ from django.views.decorators.csrf import csrf_exempt
 import aiohttp
 import asyncio
 # import concurrent.futures
-from openai import OpenAI
+# OpenAI import is optional\ntry:\n    from openai import OpenAI\nexcept ImportError:\n    OpenAI = None
 # from .openfoodfacts_api import openfoodfacts_api
 openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
-# openai.api_key = os.getenv("OPENAI_API_KEY")
 # import feedparser  # For Medium RSS feeds
 
 # Lazy initialization for OpenAI client
 _openai_client = None
 
 def get_openai_client():
-    """Get or create OpenAI client with lazy initialization."""
+    """Get or create OpenAI client with lazy initialization. Returns None if not available."""
     global _openai_client
+    if OpenAI is None:
+        return None
     if _openai_client is None:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set")
+            return None
         _openai_client = OpenAI(api_key=api_key)
     return _openai_client
 

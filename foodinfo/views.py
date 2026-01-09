@@ -13,7 +13,13 @@ ssl_context.verify_mode = ssl.CERT_NONE
 from botocore.exceptions import ClientError, NoCredentialsError
 from django.utils import timezone
 from datetime import timedelta
-import openai
+# openai import is optional - app works without it
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    openai = None
+    OPENAI_AVAILABLE = False
 import hashlib
 import threading
 from rest_framework.views import APIView
@@ -78,23 +84,28 @@ from django.views.decorators.csrf import csrf_exempt
 import aiohttp
 import asyncio
 # import concurrent.futures
-from openai import OpenAI
+# OpenAI import is optional
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 # from .openfoodfacts_api import openfoodfacts_api
 openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
 USE_STATIC_INGREDIENT_SAFETY = False    
-# openai.api_key = os.getenv("OPENAI_API_KEY")
 # import feedparser  # For Medium RSS feeds
 
 # Lazy initialization for OpenAI client - only created when first used
 _openai_client = None
 
 def get_openai_client():
-    """Get or create OpenAI client with lazy initialization."""
+    """Get or create OpenAI client with lazy initialization. Returns None if not available."""
     global _openai_client
+    if OpenAI is None:
+        return None  # OpenAI not installed
     if _openai_client is None:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set")
+            return None  # No API key configured
         _openai_client = OpenAI(api_key=api_key)
     return _openai_client
 
@@ -7930,7 +7941,7 @@ def stripe_webhook_view(request):
 
     return HttpResponse(status=200)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# OpenAI API key is set via get_openai_client() when needed
 
 # class IngredientLLMView(APIView):
 #     def get(self, request):
