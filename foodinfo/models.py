@@ -45,7 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now())  # THIS will store a datetime object at migration time
+    created_at = models.DateTimeField(default=timezone.now)  # Fixed: use callable, not evaluated value
     notifications_enabled = models.BooleanField(default=True)
     subscription_notifications_enabled = models.BooleanField(default=True)  # Toggle for subscription notifications
     dark_mode = models.BooleanField(default=False)

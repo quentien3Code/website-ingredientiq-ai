@@ -1,144 +1,15 @@
+"""
+Minimal serializers for foodinfo app.
+Mobile app terminated - only serializers used by panel/admin remain.
+"""
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-
 from panel.models import OnboardingQuestion
-from .models import FAQ, AboutUS, Termandcondition, User, UserHealthPreference, privacypolicy, FoodLabelScan, Feedback, DepartmentContact
-from django.views.decorators.csrf import csrf_exempt
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError as DjangoValidationError
+from .models import FAQ, AboutUS, Termandcondition, User, privacypolicy
 
-
-class HealthPreferenceSerializer(serializers.ModelSerializer):
-    threshold = serializers.CharField(required=True)
-
-    class Meta:
-        model = UserHealthPreference
-        fields = ['preference_type', 'name', 'threshold']
-
-    def validate_threshold(self, value):
-        # Treat empty string or "NULL" as zero.
-        if not value or value.strip().lower() == "null":
-            return "0"
-        return value
-
-class SignupSerializer(serializers.ModelSerializer):
-    confirm_password = serializers.CharField(write_only=True, required=True)
-    terms_accepted = serializers.BooleanField(required=False, write_only=True)
-    # Remove the old plain text fields (allergies, dietary_preferences, medical_conditions)
-    # and add a nested field for health_preferences.
-    health_preferences = HealthPreferenceSerializer(many=True, required=False)
-    
-    class Meta:
-        model = User
-        fields = (
-            'id',
-            'email', 
-            'full_name',  
-            'password', 
-            'confirm_password', 
-            'terms_accepted',
-            'health_preferences',
-        )
-    
-    def validate(self, data):
-        if data.get('password') != data.get('confirm_password'):
-            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
-        data.pop('confirm_password')
-        return data
-    
-    def create(self, validated_data):
-        # Pop out the health preferences data if provided.
-        health_prefs_data = validated_data.pop('health_preferences', [])
-        terms = validated_data.pop('terms_accepted', False)
-        user = User.objects.create_user(**validated_data)
-        
-        # Set terms acceptance if provided; default False when missing
-        user.is_terms = bool(terms)
-        user.save()
-        
-        # Create health preferences for the user.
-        for pref in health_prefs_data:
-            UserHealthPreference.objects.create(user=user, **pref)
-        
-        return user
-
-class LoginSerializer(serializers.Serializer):
-    email_or_phone = serializers.CharField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        identifier = data.get("email_or_phone")
-        password = data.get("password")
-
-        user = None
-
-        # Check if identifier is an email
-        try:
-            validate_email(identifier)
-            user = authenticate(email=identifier, password=password)
-        except DjangoValidationError:
-            # If not email, assume phone number
-            try:
-                user_obj = User.objects.get(phone_number=identifier)
-                user = authenticate(email=user_obj.email, password=password)
-            except User.DoesNotExist:
-                pass
-
-        if not user:
-            raise serializers.ValidationError("Invalid email/phone or password")
-
-        data["user"] = user
-        return data
-
-class ForgotPasswordRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-class VerifyOTPSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp = serializers.CharField(max_length=6)
-    new_password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        if data['new_password'] != data['confirm_password']:
-            raise serializers.ValidationError("Passwords do not match.")
-        return data
-    
-# class ChangeSerializer(serializers.Serializer):
-#     old_password = serializers.CharField(write_only=True)
-#     new_password = serializers.CharField(write_only=True)
-#     confirm_new_password = serializers.CharField(write_only=True)
-
-#     def validate(self, data):
-#         new_password = data.get('new_password')
-#         confirm_new_password = data.get('confirm_new_password')
-#         if new_password != confirm_new_password:
-#             raise serializers.ValidationError("New passwords do not match.")
-#         return data
-
-#     def validate_old_password(self, value):
-#         user = self.context.get('request').user
-#         if not user.check_password(value):
-#             raise serializers.ValidationError("Old password is not correct.")
-#         return value
-
-class ChangePasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
-
-class AllergenDietaryCheckSerializer(serializers.Serializer):
-    image = serializers.ImageField(
-        help_text="Upload an image of the food label to check its safety."
-    )
-
-class UpdateUserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('full_name', 'phone_number', 'allergies', 'dietary_preferences', 'medical_conditions')
 
 class userPatchSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField(required=False, allow_null=True)
-    phone_number = serializers.IntegerField(required=False,allow_null=True)
+    phone_number = serializers.IntegerField(required=False, allow_null=True)
     full_name = serializers.CharField(required=False) 
     Dietary_preferences = serializers.CharField(required=False) 
     Health_conditions = serializers.CharField(required=False)
@@ -150,14 +21,22 @@ class userPatchSerializer(serializers.ModelSerializer):
     Health_impact_awareness = serializers.CharField(required=False)
     Desired_outcome = serializers.CharField(required=False)
     Motivation = serializers.CharField(required=False)
+    
     class Meta:
-        model=User
-        fields=['full_name','phone_number','profile_picture','Dietary_preferences','Health_conditions','Allergies','Health_Goals','Parental_status','Family_Health_Awareness','Emotional_Conection','Health_impact_awareness','Desired_outcome','Motivation']
+        model = User
+        fields = [
+            'full_name', 'phone_number', 'profile_picture', 'Dietary_preferences',
+            'Health_conditions', 'Allergies', 'Health_Goals', 'Parental_status',
+            'Family_Health_Awareness', 'Emotional_Conection', 'Health_impact_awareness',
+            'Desired_outcome', 'Motivation'
+        ]
+    
     def validate_phone_number(self, value):
-        user = self.instance  # the currently logged-in user
+        user = self.instance
         if User.objects.exclude(pk=user.pk).filter(phone_number=value).exists():
             raise serializers.ValidationError("This phone number is already in use.")
         return value
+
 
 class userGetSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
@@ -167,27 +46,11 @@ class userGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id',
-            'email',
-            'full_name',
-            'first_name',
-            'last_name',
-            'computed_full_name',
-            'phone_number',
-            'profile_picture',
-            'questions_and_answers',
-            'date_joined',
-            'language',
-            'subscription_plan',
-            'notifications_enabled',
-            'dark_mode',
-            'privacy_settings_enabled',
-            'has_answered_onboarding',
-            'loves_app',
-            'subscription_notifications_enabled',
-            'account_deactivation_date',
-            
-            # 'food_label_scans'
+            'id', 'email', 'full_name', 'first_name', 'last_name', 'computed_full_name',
+            'phone_number', 'profile_picture', 'questions_and_answers', 'date_joined',
+            'language', 'subscription_plan', 'notifications_enabled', 'dark_mode',
+            'privacy_settings_enabled', 'has_answered_onboarding', 'loves_app',
+            'subscription_notifications_enabled', 'account_deactivation_date',
         ]
 
     def get_profile_picture(self, obj):
@@ -198,19 +61,16 @@ class userGetSerializer(serializers.ModelSerializer):
         return None
 
     def get_computed_full_name(self, obj):
-        # If we have first_name and last_name, combine them
         if obj.first_name and obj.last_name:
             return f"{obj.first_name} {obj.last_name}".strip()
         elif obj.first_name:
             return obj.first_name
         elif obj.last_name:
             return obj.last_name
-        # Fallback to the stored full_name field
         elif obj.full_name:
             return obj.full_name
-        # Final fallback for Apple users
         else:
-            return "Apple User"
+            return "User"
 
     def get_questions_and_answers(self, obj):
         user_answers = {
@@ -237,13 +97,17 @@ class userGetSerializer(serializers.ModelSerializer):
         data = []
 
         for question in questions:
-            normalized_category = category_map.get(question.category.strip().lower(), question.category.strip().lower())
+            normalized_category = category_map.get(
+                question.category.strip().lower(), 
+                question.category.strip().lower()
+            )
             user_answer_raw = user_answers.get(normalized_category, "")
+            
             if user_answer_raw:
                 if ',' in user_answer_raw and not any(
                     choice.choice_text.strip().lower() == user_answer_raw.strip().lower()
-                    for question in OnboardingQuestion.objects.all()
-                    for choice in question.choices.all()
+                    for q in OnboardingQuestion.objects.all()
+                    for choice in q.choices.all()
                 ):
                     user_selected = {ans.strip().lower() for ans in user_answer_raw.split(',')}
                 else:
@@ -251,19 +115,10 @@ class userGetSerializer(serializers.ModelSerializer):
             else:
                 user_selected = set()
 
-            # user_selected = {ans.strip().lower() for ans in user_answer_raw.split(',')} if user_answer_raw else set()
-
-            # print("\nDEBUG:")
-            # print(f"Question: {question.question_text}")
-            # print(f"Category: {question.category} → Normalized: {normalized_category}")
-            # print(f"User Raw Answer: {user_answer_raw}")
-            # print(f"User Selected Set: {user_selected}")
-
             choices_data = []
             for choice in question.choices.all():
                 choice_clean = choice.choice_text.strip().lower()
                 is_selected = choice_clean in user_selected
-                print(f"Choice: {choice_clean} | Selected: {is_selected}")
                 choices_data.append({
                     "choice_text": choice.choice_text,
                     "is_selected": is_selected
@@ -278,118 +133,25 @@ class userGetSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class termsandconditionSerializer(serializers.ModelSerializer):
     class Meta:
-        model=Termandcondition
-        fields='__all__'
+        model = Termandcondition
+        fields = '__all__'
+
 
 class privacypolicySerializer(serializers.ModelSerializer):
     class Meta:
-        model=privacypolicy
-        fields='__all__'
+        model = privacypolicy
+        fields = '__all__'
+
 
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
         model = FAQ
-        fields='__all__'
+        fields = '__all__'
+
 
 class AboutSerializer(serializers.ModelSerializer):
     class Meta:
         model = AboutUS
-        fields='__all__'
-
-class FoodLabelScanSerializer(serializers.ModelSerializer):
-    scanned_at = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = FoodLabelScan
         fields = '__all__'
-    
-    def get_scanned_at(self, obj):
-        """Format the scanned_at field as mm/dd/yyyy"""
-        if obj.scanned_at:
-            return obj.scanned_at.strftime('%m/%d/%Y')
-        return None
-
-class UserSettingsSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.SerializerMethodField()
-    subscription_plan = serializers.SerializerMethodField()
-    subscription_status = serializers.SerializerMethodField()
-    premium_type = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = [
-            'full_name', 'email', 'profile_picture',
-            'notifications_enabled', 'dark_mode', 'language',
-            'subscription_plan', 'subscription_status', 'premium_type',
-            'privacy_settings_enabled', 'is_2fa_enabled', 'account_deactivation_date','subscription_notifications_enabled'
-        ]
-    
-    def get_profile_picture(self, obj):
-        if obj.profile_picture:
-            url = obj.profile_picture.url
-            return url.replace("https//https://", "https://")  # fix double https
-        return None
-    
-    def get_subscription_plan(self, obj):
-        try:
-            subscription = obj.usersubscription
-            return subscription.plan_name
-        except:
-            return "freemium"
-    
-    def get_subscription_status(self, obj):
-        try:
-            subscription = obj.usersubscription
-            return subscription.status
-        except:
-            return "inactive"
-    
-    def get_premium_type(self, obj):
-        try:
-            subscription = obj.usersubscription
-            return subscription.premium_type
-        except:
-            return None
-
-class FeedbackSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feedback
-        fields = ['rating', 'comment']
-        extra_kwargs = {
-            'rating': {'required': True},
-            'comment': {'required': True}
-        }
-
-    def validate_rating(self, value):
-        if value < 1 or value > 5:
-            raise serializers.ValidationError("Rating must be between 1 and 5")
-        return value
-
-class LoveAppSerializer(serializers.Serializer):
-    loves_app = serializers.BooleanField(required=True)
-
-class DepartmentContactSerializer(serializers.ModelSerializer):
-    department_display = serializers.CharField(source='get_department_display', read_only=True)
-    
-    class Meta:
-        model = DepartmentContact
-        fields = ['id', 'department', 'department_display', 'contact_name', 'phone_number', 'email', 'available_hours', 'description', 'is_active']
-
-# Mobile-specific serializers removed (DeviceToken, NotificationTemplate, PushNotification, AppVersion, CustomNotification)
-
-class NotificationSettingsSerializer(serializers.ModelSerializer):
-    """Serializer for user notification settings"""
-    
-    class Meta:
-        model = User
-        fields = ['notifications_enabled']
-
-class NotificationToggleSerializer(serializers.ModelSerializer):
-    """Serializer for subscription notification toggle"""
-    
-    class Meta:
-        model = User
-        fields = ['subscription_notifications_enabled']

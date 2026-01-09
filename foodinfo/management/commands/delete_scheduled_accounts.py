@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from foodinfo.models import AccountDeletionRequest, User
-from foodinfo.views import safe_delete_user
+from foodinfo.helpers import safe_delete_user
 import logging
 
 logger = logging.getLogger(__name__)
