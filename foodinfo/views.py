@@ -84,7 +84,23 @@ openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
 USE_STATIC_INGREDIENT_SAFETY = False    
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 # import feedparser  # For Medium RSS feeds
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Lazy initialization for OpenAI client - only created when first used
+_openai_client = None
+
+def get_openai_client():
+    """Get or create OpenAI client with lazy initialization."""
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        _openai_client = OpenAI(api_key=api_key)
+    return _openai_client
+
+# For backward compatibility - use get_openai_client() in new code
+client = None  # Will be initialized lazily via get_openai_client()
+
 BASE_URL = "https://api.spoonacular.com"
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/"
 OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v0/product/"
@@ -6080,7 +6096,7 @@ class IngredientFullDataView(APIView):
             from django.conf import settings
             client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', os.getenv('OPENAI_API_KEY')))
             
-            response = client.chat.completions.create(
+            response = get_openai_client().chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a food safety expert who analyzes ingredients for personalized safety recommendations. Always respond with valid JSON."}, 
@@ -6270,7 +6286,7 @@ class IngredientFullDataView(APIView):
             from django.conf import settings
             client = openai.OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', os.getenv('OPENAI_API_KEY')))
             
-            response = client.chat.completions.create(
+            response = get_openai_client().chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a medical nutritionist who analyzes ingredient risks for personalized health recommendations. Always respond with valid JSON."}, 
@@ -9550,7 +9566,7 @@ class ProductComparisonView(APIView):
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
 
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are an expert in food science and health."},
@@ -9661,7 +9677,7 @@ class ProductComparisonView(APIView):
                     api_key=os.getenv("OPENAI_API_KEY"),
                 )
 
-                completion = client.chat.completions.create(
+                completion = get_openai_client().chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are an expert nutritionist and health advisor. Provide clear, personalized recommendations based on user health profiles and ingredient analysis."},
@@ -11036,7 +11052,7 @@ class BarcodeView(APIView):
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
 
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are an expert in food science and health."},
@@ -11775,7 +11791,7 @@ class BarcodeView(APIView):
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
 
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are an expert in food science and health."},
@@ -11858,7 +11874,7 @@ class BarcodeView(APIView):
             - If an ingredient is not in the provided list, do not include it in the response
             """
             
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a certified nutritionist and food safety expert. Always respond with valid JSON."},
@@ -12097,7 +12113,7 @@ class BarcodeView(APIView):
             )
             
             try:
-                completion = client.chat.completions.create(
+                completion = get_openai_client().chat.completions.create(
                     model="gpt-4",  # Use GPT-4 for highest quality consultative response
                     messages=[
                         {
@@ -12312,7 +12328,7 @@ class BarcodeView(APIView):
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
 
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are an expert in food science and health."},
@@ -12442,7 +12458,7 @@ class BarcodeView(APIView):
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
 
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are an expert in food science and health."},
@@ -17203,7 +17219,7 @@ class FoodLabelNutritionView(APIView):
                     timeout=5.0  # Increased timeout for longer responses
                 )
                 
-                completion = client.chat.completions.create(
+                completion = get_openai_client().chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a certified nutrition expert and medical advisor. CRITICAL: You MUST provide comprehensive, detailed responses that strictly meet the specified word counts. Each section must be substantive and informative. PERSONALIZED_INSIGHT: exactly 60-80 words. MAIN_INSIGHT: exactly 80-100 words. DEEPER_REFERENCE: exactly 150-200 words with scientific citations. PROGNOSIS: exactly 130-150 words with clinical evidence. PATIENT_COUNSELING: exactly 130-150 words with empowerment language. Count your words carefully and expand content to meet minimum requirements."},
@@ -17766,7 +17782,7 @@ Do not add extra headings or commentary. Keep the total ≤ 270 words."""
             completion = None
             
             try:
-                completion = client.chat.completions.create(
+                completion = get_openai_client().chat.completions.create(
                     model=model_name,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT_EXPERT_ADVICE},
@@ -17784,7 +17800,7 @@ Do not add extra headings or commentary. Keep the total ≤ 270 words."""
                 print(f"⚠️ Model {model_name} failed: {model_error}. Trying gpt-4o...")
                 model_name = "gpt-4o"
                 try:
-                    completion = client.chat.completions.create(
+                    completion = get_openai_client().chat.completions.create(
                         model=model_name,
                         messages=[
                             {"role": "system", "content": SYSTEM_PROMPT_EXPERT_ADVICE},
@@ -18161,7 +18177,7 @@ Do not add sections or commentary. Keep total ≤ 340 words."""
             user_message = json.dumps(ihi_input, indent=2)
             instruction = 'Use the JSON to generate the three sections exactly per the system prompt. Do not invent facts beyond the JSON. If "status" is "Defer", explain why and request a clearer rescan in BLUF.'
             
-            completion = client.chat.completions.create(
+            completion = get_openai_client().chat.completions.create(
                 model=model_name,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT_INSIGHT},
@@ -18497,7 +18513,7 @@ Do not add sections or commentary. Keep total ≤ 340 words."""
                     timeout=8.0  # Increased timeout for enhanced analysis
                 )
                 
-                completion = client.chat.completions.create(
+                completion = get_openai_client().chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a certified nutrition expert and medical advisor. CRITICAL: Provide enhanced analysis with condition-specific flagging, weighted scoring transparency, IBS/FODMAP severity sliders, and comprehensive expert insights. Include ingredient-to-condition mapping, scoring logic explanations, and structured 'Why Flagged' sections with data sources. Count words carefully and expand content to meet requirements."},
@@ -20099,7 +20115,7 @@ Do not add sections or commentary. Keep total ≤ 340 words."""
             
             # Call OpenAI API
             try:
-                response = client.chat.completions.create(
+                response = get_openai_client().chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a nutrition and food safety expert. Always respond with valid JSON only."},

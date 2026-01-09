@@ -72,7 +72,22 @@ from openai import OpenAI
 openfoodfacts_api = "https://world.openfoodfacts.org/api/v0/product/"
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 # import feedparser  # For Medium RSS feeds
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Lazy initialization for OpenAI client
+_openai_client = None
+
+def get_openai_client():
+    """Get or create OpenAI client with lazy initialization."""
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        _openai_client = OpenAI(api_key=api_key)
+    return _openai_client
+
+client = None  # Use get_openai_client() instead
+
 BASE_URL = "https://api.spoonacular.com"
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/"
 OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v0/product/"
