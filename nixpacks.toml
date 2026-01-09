@@ -32,7 +32,7 @@ nixPkgs = [
   
   # Utilities
   "python311Packages.fuzzywuzzy",
-  "python311Packages.python-levenshtein",
+  "python311Packages.python-Levenshtein",
   "python311Packages.beautifulsoup4",
   
   # Environment
