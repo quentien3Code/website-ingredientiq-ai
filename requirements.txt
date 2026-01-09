@@ -6,3 +6,4 @@ whitenoise>=6.6.0
 certifi
 django-storages
 django-allauth
+django-cors-headers
