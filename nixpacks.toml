@@ -12,7 +12,11 @@ nixPkgs = [
 ]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+  "python -m venv /app/venv",
+  "/app/venv/bin/pip install --upgrade pip",
+  "/app/venv/bin/pip install -r requirements.txt"
+]
 
 [start]
-cmd = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "/app/venv/bin/python manage.py collectstatic --noinput && /app/venv/bin/python manage.py migrate --noinput && /app/venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
