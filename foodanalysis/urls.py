@@ -24,6 +24,9 @@ from django.http import HttpResponse, FileResponse
 import os
 from django.views.generic import TemplateView
 
+# Import standalone health check (isolated, no dependencies)
+from .health import health
+
 # =============================================================================
 # Frontend Asset Paths Configuration
 # =============================================================================
@@ -122,8 +125,8 @@ def health_check(request):
         return HttpResponse(f'{{"status": "unhealthy", "error": "{str(e)}"}}', content_type='application/json', status=500)
 
 urlpatterns = [
-    # Health check for Railway
-    path('api/health/', health_check, name='health-check'),
+    # Health check for Railway - simple endpoint, no database dependency
+    path('api/health/', health, name='health-check'),
     
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
