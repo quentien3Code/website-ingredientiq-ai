@@ -9,3 +9,4 @@ django-allauth
 django-cors-headers
 requests
 PyJWT>=2.8.0
+cryptography
