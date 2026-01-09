@@ -14,3 +14,4 @@ djangorestframework
 djangorestframework-simplejwt
 fuzzywuzzy
 beautifulsoup4
+Pillow
