@@ -26,7 +26,8 @@ AUTH_USER_MODEL = 'foodinfo.User'
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY: Secret key loaded from environment variable
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-CHANGE-ME-IN-PRODUCTION')
+import secrets
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', secrets.token_urlsafe(64))
 
 # SECURITY: Debug mode from environment (default False for safety)
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
@@ -244,6 +245,7 @@ CORS_EXPOSE_HEADERS = [
 # Additional security settings
 X_FRAME_OPTIONS = 'DENY'
 CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 
