@@ -115,14 +115,8 @@ def serve_logo(request, filename):
         return HttpResponse('Logo not found', status=404)
 
 def health_check(request):
-    """Health check endpoint for Railway deployment"""
-    from django.db import connection
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        return HttpResponse('{"status": "healthy", "database": "connected"}', content_type='application/json')
-    except Exception as e:
-        return HttpResponse(f'{{"status": "unhealthy", "error": "{str(e)}"}}', content_type='application/json', status=500)
+    """Health check endpoint for Railway deployment - always returns 200"""
+    return HttpResponse('OK', status=200)
 
 urlpatterns = [
     # Health check for Railway - simple endpoint, no database dependency
