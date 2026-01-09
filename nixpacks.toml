@@ -1,54 +1,57 @@
+# nixpacks.toml
+# Railway / Nixpacks: make the runtime deterministic.
+# - We skip Nixpacks' auto Python dependency install.
+# - We create our own venv at /opt/venv.
+# - We install requirements.txt into that venv.
+# - We run Django + Gunicorn explicitly from /opt/venv/bin.
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.11"
+NIXPACKS_PYTHON_PACKAGE_MANAGER = "skip"
+PYTHONUNBUFFERED = "1"
+PYTHONDONTWRITEBYTECODE = "1"
+
 [phases.setup]
 nixPkgs = [
   # Python runtime
   "python311",
-  
-  # Core Django stack
-  "python311Packages.django",
-  "python311Packages.djangorestframework",
-  "python311Packages.djangorestframework-simplejwt",
-  "python311Packages.pyjwt",
-  "python311Packages.pillow",
-  
-  # Middleware / Static Files
-  "python311Packages.whitenoise",
-  "python311Packages.django-cors-headers",
-  
-  # Authentication
-  "python311Packages.django-allauth",
-  "python311Packages.social-auth-app-django",
-  "python311Packages.requests-oauthlib",
-  "python311Packages.cryptography",
-  
-  # Storage (S3)
-  "python311Packages.django-storages",
-  "python311Packages.boto3",
-  
-  # Database
-  "python311Packages.psycopg2",
-  
-  # Server
-  "python311Packages.gunicorn",
-  
-  # Utilities
-  "python311Packages.fuzzywuzzy",
-  "python311Packages.python-Levenshtein",
-  "python311Packages.beautifulsoup4",
-  
-  # Environment
-  "python311Packages.python-dotenv",
-  
-  # System libs for image processing
-  "libGL",
-  "libGLU",
-  "glib",
+
+  # Helpful for building any dependency that falls back to source
+  "gcc",
+  "pkg-config",
+
+  # Common system libs needed by image/crypto stacks (safe + lightweight)
+  "openssl",
+  "libffi",
   "zlib",
   "libjpeg",
-  "libpng"
+  "libpng",
+
+  # If anything still touches OpenCV / GUI-linked libs at runtime
+  "libGL",
+  "libGLU",
+  "glib"
+]
+
+# Ensure runtime can find shared libraries (libGL.so.1, etc.)
+nixLibs = [
+  "openssl",
+  "libffi",
+  "zlib",
+  "libjpeg",
+  "libpng",
+  "libGL",
+  "libGLU",
+  "glib"
 ]
 
 [phases.install]
-cmds = ["echo 'All deps from Nix - no pip needed'"]
+cmds = [
+  "python -m venv --copies /opt/venv",
+  ". /opt/venv/bin/activate",
+  "python -m pip install --upgrade pip",
+  "pip install -r requirements.txt"
+]
 
 [start]
-cmd = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "/opt/venv/bin/python manage.py collectstatic --noinput && /opt/venv/bin/python manage.py migrate --noinput && /opt/venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
