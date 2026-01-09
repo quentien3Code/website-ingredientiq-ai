@@ -1,8 +1,44 @@
 [phases.setup]
 nixPkgs = [
+  # Python runtime
   "python311",
-  "python311Packages.pip",
-  "python311Packages.virtualenv",
+  
+  # Core Django stack
+  "python311Packages.django_4",
+  "python311Packages.djangorestframework",
+  "python311Packages.djangorestframework-simplejwt",
+  "python311Packages.pyjwt",
+  "python311Packages.pillow",
+  
+  # Middleware / Static Files
+  "python311Packages.whitenoise",
+  "python311Packages.django-cors-headers",
+  
+  # Authentication
+  "python311Packages.django-allauth",
+  "python311Packages.social-auth-app-django",
+  "python311Packages.requests-oauthlib",
+  "python311Packages.cryptography",
+  
+  # Storage (S3)
+  "python311Packages.django-storages",
+  "python311Packages.boto3",
+  
+  # Database
+  "python311Packages.psycopg2",
+  
+  # Server
+  "python311Packages.gunicorn",
+  
+  # Utilities
+  "python311Packages.fuzzywuzzy",
+  "python311Packages.python-levenshtein",
+  "python311Packages.beautifulsoup4",
+  
+  # Environment
+  "python311Packages.python-dotenv",
+  
+  # System libs for image processing
   "libGL",
   "libGLU",
   "glib",
@@ -12,11 +48,7 @@ nixPkgs = [
 ]
 
 [phases.install]
-cmds = [
-  "virtualenv /opt/venv",
-  "/opt/venv/bin/pip install --upgrade pip",
-  "/opt/venv/bin/pip install -r requirements.txt"
-]
+cmds = ["echo 'All deps from Nix - no pip needed'"]
 
 [start]
-cmd = "/opt/venv/bin/python manage.py collectstatic --noinput && /opt/venv/bin/python manage.py migrate --noinput && /opt/venv/bin/gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT"
