@@ -13,3 +13,4 @@ cryptography
 djangorestframework
 djangorestframework-simplejwt
 fuzzywuzzy
+beautifulsoup4
