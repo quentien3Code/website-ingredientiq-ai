@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-import foodinfo,panel,Website
+import panel,Website
 
 from django.views.static import serve
 from django.conf import settings
@@ -130,7 +130,7 @@ urlpatterns = [
     
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
-    path('foodapp/',include('foodinfo.urls')),
+    # foodinfo removed - mobile app terminated
     path('accounts/', include('allauth.urls')),
     path('master/',include('panel.urls')),
     path('web/',include('Website.urls')),
