@@ -188,8 +188,6 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 import os
 load_dotenv() 
-import ssl
-import certifi
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.hostnet.nl'
 # EMAIL_PORT = 587
