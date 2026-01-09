@@ -45,6 +45,10 @@ if RAILWAY_DOMAIN:
 if 'ingredientiq.ai' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.extend(['ingredientiq.ai', 'www.ingredientiq.ai'])
 
+# Allow Railway health check requests
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
+
 
 # Application definition
 

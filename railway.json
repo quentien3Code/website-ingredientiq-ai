@@ -6,6 +6,7 @@
   "deploy": {
     "startCommand": "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn foodanalysis.wsgi:application --bind 0.0.0.0:$PORT",
     "healthcheckPath": "/api/health/",
+    "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
