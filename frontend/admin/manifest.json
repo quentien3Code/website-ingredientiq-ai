@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "IQ Control Panel",
+  "name": "IngredientIQ™ Control Panel",
+  "description": "Admin dashboard for managing IngredientIQ platform - users, content, and settings",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +19,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/control-panel/",
+  "scope": "/control-panel/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#25ced4",
+  "background_color": "#1E1E1E"
 }

@@ -1,0 +1,783 @@
+/* =========================================================================
+   IngredientIQ Admin Panel - Brand Override Stylesheet
+   Aligns admin panel design with main website branding
+   ========================================================================= */
+
+/* ==========================================================================
+   CSS VARIABLES - IngredientIQ Brand Palette
+   ========================================================================== */
+:root {
+    /* Primary Brand Colors */
+    --iq-primary: #1E1E1E;
+    --iq-accent: #25ced4;
+    --iq-accent-secondary: #2b9ac6;
+    --iq-accent-dark: #1ba8ad;
+    --iq-accent-light: #4dd8dd;
+    
+    /* Neutrals */
+    --iq-white: #FFFFFF;
+    --iq-gray-50: #f8fafb;
+    --iq-gray-100: #EAEEF1;
+    --iq-gray-200: #e2e8f0;
+    --iq-gray-300: #cbd5e1;
+    --iq-gray-400: #94a3b8;
+    --iq-gray-500: #64748b;
+    --iq-gray-600: #475569;
+    --iq-gray-700: #334155;
+    --iq-gray-800: #1e293b;
+    --iq-gray-900: #0f172a;
+    
+    /* Status Colors */
+    --iq-success: #10b981;
+    --iq-success-light: #d1fae5;
+    --iq-warning: #f59e0b;
+    --iq-warning-light: #fef3c7;
+    --iq-error: #ef4444;
+    --iq-error-light: #fee2e2;
+    --iq-info: #3b82f6;
+    --iq-info-light: #dbeafe;
+    
+    /* Typography */
+    --iq-font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    
+    /* Shadows */
+    --iq-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --iq-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --iq-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --iq-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --iq-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    
+    /* Border Radius */
+    --iq-radius-sm: 6px;
+    --iq-radius: 12px;
+    --iq-radius-lg: 16px;
+    --iq-radius-xl: 20px;
+    --iq-radius-full: 9999px;
+    
+    /* Transitions */
+    --iq-transition: all 0.3s ease-in-out;
+    --iq-transition-fast: all 0.15s ease-in-out;
+}
+
+/* ==========================================================================
+   GOOGLE FONTS - Lato Import
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,400;1,700&display=swap');
+
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--iq-font-family) !important;
+    background: var(--iq-gray-50) !important;
+    color: var(--iq-gray-700) !important;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--iq-gray-100);
+    border-radius: var(--iq-radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--iq-accent);
+    border-radius: var(--iq-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--iq-accent-dark);
+}
+
+/* Selection */
+::selection {
+    background: var(--iq-accent);
+    color: var(--iq-white);
+}
+
+/* ==========================================================================
+   TYPOGRAPHY OVERRIDES
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6,
+.text-2xl, .text-3xl, .text-4xl, .text-xl, .text-lg {
+    font-family: var(--iq-font-family) !important;
+    font-weight: 700 !important;
+    color: var(--iq-primary) !important;
+    letter-spacing: -0.02em;
+}
+
+.text-4xl {
+    font-size: 2.25rem !important;
+    line-height: 1.2 !important;
+}
+
+.text-3xl {
+    font-size: 1.875rem !important;
+    line-height: 1.25 !important;
+}
+
+.text-2xl {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+}
+
+.text-xl {
+    font-size: 1.25rem !important;
+    line-height: 1.4 !important;
+}
+
+/* ==========================================================================
+   SIDEBAR NAVIGATION - Complete Redesign
+   ========================================================================== */
+/* Sidebar Container */
+aside,
+nav[class*="fixed"],
+div[class*="ml-64"],
+.fixed.inset-y-0.left-0,
+div[class*="bg-gradient-to-br"][class*="from-blue-950"],
+div[class*="bg-gradient-to-br"][class*="from-purple-900"],
+div[class*="bg-gradient-to-r"][class*="from-gray-700"] {
+    background: linear-gradient(180deg, var(--iq-primary) 0%, #0d1117 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar Brand/Logo Area */
+.fixed.inset-y-0 .text-2xl,
+.fixed.inset-y-0 .text-3xl,
+aside .text-2xl,
+aside .text-3xl {
+    color: var(--iq-accent) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em;
+}
+
+/* Sidebar Navigation Links */
+aside a,
+nav a,
+.fixed.inset-y-0 a {
+    color: var(--iq-gray-300) !important;
+    transition: var(--iq-transition) !important;
+    border-radius: var(--iq-radius) !important;
+    margin: 4px 8px !important;
+    padding: 12px 16px !important;
+}
+
+aside a:hover,
+nav a:hover,
+.fixed.inset-y-0 a:hover {
+    background: rgba(37, 206, 212, 0.15) !important;
+    color: var(--iq-accent) !important;
+    transform: translateX(4px);
+}
+
+/* Active Sidebar Link */
+aside a.active,
+nav a.active,
+aside a[aria-current="page"],
+.fixed.inset-y-0 a.active {
+    background: linear-gradient(135deg, var(--iq-accent) 0%, var(--iq-accent-secondary) 100%) !important;
+    color: var(--iq-white) !important;
+    box-shadow: 0 4px 15px rgba(37, 206, 212, 0.4) !important;
+}
+
+/* Sidebar Icons */
+aside svg,
+nav svg,
+.fixed.inset-y-0 svg {
+    color: currentColor !important;
+    opacity: 0.8;
+}
+
+aside a:hover svg,
+nav a:hover svg {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA
+   ========================================================================== */
+main,
+.ml-64,
+.md\:pr-64,
+div[class*="ml-64"] {
+    background: var(--iq-gray-50) !important;
+}
+
+/* ==========================================================================
+   CARDS - Modern Elevated Design
+   ========================================================================== */
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+div[class*="bg-white"][class*="rounded"],
+div[class*="shadow-lg"],
+div[class*="shadow-md"],
+div[class*="shadow-2xl"] {
+    background: var(--iq-white) !important;
+    border-radius: var(--iq-radius-lg) !important;
+    box-shadow: var(--iq-shadow-md) !important;
+    border: 1px solid var(--iq-gray-100) !important;
+    transition: var(--iq-transition) !important;
+}
+
+.rounded-lg:hover,
+.rounded-xl:hover,
+.rounded-2xl:hover,
+div[class*="bg-white"][class*="rounded"]:hover {
+    box-shadow: var(--iq-shadow-xl) !important;
+    transform: translateY(-2px);
+    border-color: var(--iq-accent) !important;
+}
+
+/* Stat Cards */
+div[class*="bg-gradient-to-br"],
+div[class*="bg-gradient-to-r"] {
+    border-radius: var(--iq-radius-lg) !important;
+}
+
+/* Override blue gradients with brand colors */
+.bg-gradient-to-br.from-blue-500,
+.bg-gradient-to-r.from-blue-500,
+div[class*="from-blue-500"][class*="to-blue-600"],
+div[class*="from-sky-500"][class*="to-sky-600"],
+div[class*="from-sky-600"][class*="to-sky-800"] {
+    background: linear-gradient(135deg, var(--iq-accent) 0%, var(--iq-accent-secondary) 100%) !important;
+}
+
+/* Override teal gradients */
+.from-teal-400,
+.from-teal-500,
+div[class*="from-teal"] {
+    background: linear-gradient(135deg, var(--iq-accent) 0%, var(--iq-accent-dark) 100%) !important;
+}
+
+/* Override green success cards */
+.bg-green-500,
+.bg-green-700,
+div[class*="bg-green-500"],
+div[class*="bg-green-700"] {
+    background: var(--iq-success) !important;
+}
+
+/* ==========================================================================
+   BUTTONS - Animated & Polished
+   ========================================================================== */
+button,
+.btn,
+[type="button"],
+[type="submit"],
+a[class*="bg-blue"],
+a[class*="bg-green"],
+button[class*="bg-blue"],
+button[class*="bg-green"],
+button[class*="bg-sky"] {
+    font-family: var(--iq-font-family) !important;
+    font-weight: 600 !important;
+    border-radius: var(--iq-radius) !important;
+    transition: var(--iq-transition) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Primary Buttons */
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-700,
+.bg-sky-800,
+button[class*="bg-blue-500"],
+button[class*="bg-blue-600"],
+button[class*="bg-blue-700"],
+button[class*="bg-sky"] {
+    background: linear-gradient(135deg, var(--iq-accent) 0%, var(--iq-accent-secondary) 100%) !important;
+    border: none !important;
+    color: var(--iq-white) !important;
+    box-shadow: 0 4px 14px rgba(37, 206, 212, 0.35) !important;
+}
+
+.bg-blue-500:hover,
+.bg-blue-600:hover,
+.bg-blue-700:hover,
+.bg-sky-800:hover,
+button[class*="bg-blue"]:hover,
+button[class*="bg-sky"]:hover {
+    background: linear-gradient(135deg, var(--iq-accent-dark) 0%, var(--iq-accent-secondary) 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(37, 206, 212, 0.5) !important;
+}
+
+/* Success Buttons */
+.bg-green-500,
+.bg-green-600,
+.bg-green-700,
+button[class*="bg-green"] {
+    background: var(--iq-success) !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+
+button[class*="bg-green"]:hover {
+    background: #059669 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Danger Buttons */
+.bg-red-500,
+.bg-red-600,
+button[class*="bg-red"] {
+    background: var(--iq-error) !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35) !important;
+}
+
+button[class*="bg-red"]:hover {
+    background: #dc2626 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* Secondary/Outline Buttons */
+.bg-gray-200,
+.bg-gray-300,
+button[class*="bg-gray-200"],
+button[class*="bg-gray-300"] {
+    background: var(--iq-white) !important;
+    border: 2px solid var(--iq-gray-200) !important;
+    color: var(--iq-gray-700) !important;
+}
+
+button[class*="bg-gray"]:hover {
+    border-color: var(--iq-accent) !important;
+    color: var(--iq-accent) !important;
+    background: rgba(37, 206, 212, 0.05) !important;
+}
+
+/* ==========================================================================
+   FORM INPUTS - Refined
+   ========================================================================== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select,
+.border.rounded-lg,
+.border.rounded-md,
+input[class*="border"],
+textarea[class*="border"] {
+    font-family: var(--iq-font-family) !important;
+    border: 2px solid var(--iq-gray-200) !important;
+    border-radius: var(--iq-radius) !important;
+    padding: 12px 16px !important;
+    background: var(--iq-white) !important;
+    transition: var(--iq-transition) !important;
+    color: var(--iq-gray-800) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+input[class*="border"]:focus,
+textarea[class*="border"]:focus {
+    outline: none !important;
+    border-color: var(--iq-accent) !important;
+    box-shadow: 0 0 0 4px rgba(37, 206, 212, 0.15) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--iq-gray-400) !important;
+}
+
+/* ==========================================================================
+   TABLES - Clean & Professional
+   ========================================================================== */
+table {
+    border-radius: var(--iq-radius-lg) !important;
+    overflow: hidden !important;
+    box-shadow: var(--iq-shadow) !important;
+}
+
+thead,
+th,
+.border-b.border-gray-700,
+tr[class*="border-b"] th {
+    background: linear-gradient(135deg, var(--iq-primary) 0%, var(--iq-gray-800) 100%) !important;
+    color: var(--iq-white) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.05em !important;
+    padding: 16px !important;
+}
+
+tbody tr {
+    transition: var(--iq-transition-fast) !important;
+}
+
+tbody tr:hover {
+    background: rgba(37, 206, 212, 0.05) !important;
+}
+
+td {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid var(--iq-gray-100) !important;
+    color: var(--iq-gray-700) !important;
+}
+
+/* ==========================================================================
+   STATUS BADGES - Vibrant Pills
+   ========================================================================== */
+.rounded-full,
+span[class*="rounded-full"],
+span[class*="bg-green"][class*="rounded"],
+span[class*="bg-red"][class*="rounded"],
+span[class*="bg-blue"][class*="rounded"],
+span[class*="bg-yellow"][class*="rounded"] {
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.025em !important;
+    padding: 6px 12px !important;
+}
+
+/* Premium Badge */
+.bg-green-200,
+span[class*="bg-green-200"] {
+    background: var(--iq-success-light) !important;
+    color: #065f46 !important;
+}
+
+/* Freemium Badge */
+.bg-blue-300,
+span[class*="bg-blue-300"] {
+    background: var(--iq-info-light) !important;
+    color: #1e40af !important;
+}
+
+/* Warning Badge */
+.bg-orange-400,
+span[class*="bg-orange"] {
+    background: var(--iq-warning-light) !important;
+    color: #92400e !important;
+}
+
+/* Error Badge */
+.bg-red-300,
+span[class*="bg-red-300"] {
+    background: var(--iq-error-light) !important;
+    color: #991b1b !important;
+}
+
+/* ==========================================================================
+   MODALS & DIALOGS
+   ========================================================================== */
+.fixed.inset-0.flex.items-center.justify-center,
+div[class*="fixed"][class*="inset-0"][class*="bg-black"][class*="bg-opacity"] {
+    backdrop-filter: blur(8px) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+}
+
+.fixed.inset-0 > div[class*="bg-white"],
+.fixed.inset-0 > div[class*="rounded"] {
+    border-radius: var(--iq-radius-xl) !important;
+    box-shadow: var(--iq-shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    animation: modalFadeIn 0.3s ease-out !important;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ==========================================================================
+   LOADING STATES
+   ========================================================================== */
+.loader span,
+.loader-container .loader span {
+    background-color: var(--iq-accent) !important;
+}
+
+/* Preloader */
+.loader-container {
+    background: linear-gradient(135deg, var(--iq-primary) 0%, var(--iq-gray-900) 100%) !important;
+}
+
+/* Heart loader override */
+.heart,
+.heart:before,
+.heart:after {
+    background-color: var(--iq-accent) !important;
+}
+
+/* ==========================================================================
+   QUILL EDITOR ENHANCEMENTS
+   ========================================================================== */
+.ql-container,
+.ql-toolbar {
+    font-family: var(--iq-font-family) !important;
+    border-color: var(--iq-gray-200) !important;
+    border-radius: var(--iq-radius) !important;
+}
+
+.ql-toolbar {
+    border-radius: var(--iq-radius) var(--iq-radius) 0 0 !important;
+    background: var(--iq-gray-50) !important;
+}
+
+.ql-container {
+    border-radius: 0 0 var(--iq-radius) var(--iq-radius) !important;
+}
+
+.ql-editor {
+    min-height: 200px !important;
+    font-family: var(--iq-font-family) !important;
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+}
+
+.ql-editor:focus {
+    outline: none !important;
+}
+
+.ql-toolbar button:hover,
+.ql-toolbar button.ql-active {
+    color: var(--iq-accent) !important;
+}
+
+.ql-toolbar .ql-stroke {
+    stroke: var(--iq-gray-600) !important;
+}
+
+.ql-toolbar button:hover .ql-stroke,
+.ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--iq-accent) !important;
+}
+
+/* ==========================================================================
+   TEXT COLOR OVERRIDES
+   ========================================================================== */
+.text-blue-500,
+.text-blue-600,
+a[class*="text-blue"] {
+    color: var(--iq-accent-secondary) !important;
+}
+
+.text-blue-500:hover,
+.text-blue-600:hover,
+a[class*="text-blue"]:hover {
+    color: var(--iq-accent) !important;
+}
+
+.text-gray-500,
+.text-gray-600 {
+    color: var(--iq-gray-500) !important;
+}
+
+.text-gray-700,
+.text-gray-800 {
+    color: var(--iq-gray-700) !important;
+}
+
+/* ==========================================================================
+   LINKS
+   ========================================================================== */
+a {
+    color: var(--iq-accent-secondary) !important;
+    transition: var(--iq-transition-fast) !important;
+}
+
+a:hover {
+    color: var(--iq-accent) !important;
+}
+
+/* ==========================================================================
+   DIVIDERS & BORDERS
+   ========================================================================== */
+.border-gray-300,
+.border-gray-500,
+.border-gray-600,
+.border-gray-700,
+.border-gray-800,
+div[class*="border-gray"] {
+    border-color: var(--iq-gray-200) !important;
+}
+
+.border-b,
+.border-t {
+    border-color: var(--iq-gray-100) !important;
+}
+
+/* ==========================================================================
+   PAGE HEADER / TITLE AREA
+   ========================================================================== */
+.mt-28,
+.mt-36,
+.pt-20,
+.pt-24 {
+    position: relative;
+}
+
+/* Dashboard Welcome Title */
+.text-4xl.font-extrabold,
+.text-3xl.font-bold {
+    background: linear-gradient(135deg, var(--iq-primary) 0%, var(--iq-accent-secondary) 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 768px) {
+    .fixed.inset-y-0.left-0 {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .fixed.inset-y-0.left-0.open,
+    .fixed.inset-y-0.left-0.translate-x-0 {
+        transform: translateX(0);
+    }
+    
+    /* Mobile-friendly cards */
+    .rounded-lg,
+    .rounded-xl,
+    .rounded-2xl {
+        border-radius: var(--iq-radius) !important;
+    }
+    
+    /* Mobile padding adjustments */
+    .p-6, .p-8, .p-10, .p-12 {
+        padding: 16px !important;
+    }
+}
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(37, 206, 212, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(37, 206, 212, 0);
+    }
+}
+
+/* Card entrance animation */
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+    animation: slideUp 0.4s ease-out;
+}
+
+/* Button pulse on focus */
+button:focus {
+    animation: pulse-glow 2s infinite;
+}
+
+/* ==========================================================================
+   UTILITY OVERRIDES
+   ========================================================================== */
+/* Focus states */
+*:focus {
+    outline-color: var(--iq-accent) !important;
+}
+
+.focus\:ring-blue-500:focus {
+    --tw-ring-color: var(--iq-accent) !important;
+}
+
+.focus\:ring-gray-400:focus {
+    --tw-ring-color: var(--iq-gray-300) !important;
+}
+
+/* Hover backgrounds */
+.hover\:bg-blue-500:hover,
+.hover\:bg-blue-600:hover,
+.hover\:bg-blue-700:hover {
+    background: var(--iq-accent-dark) !important;
+}
+
+.hover\:bg-gray-200:hover,
+.hover\:bg-gray-400:hover {
+    background: var(--iq-gray-100) !important;
+}
+
+/* ==========================================================================
+   DASHBOARD SPECIFIC STYLES
+   ========================================================================== */
+/* Stats Cards */
+div[class*="h-"][class*="w-"][class*="rounded-2xl"],
+div[class*="h-36"][class*="rounded-2xl"],
+div[class*="h-40"][class*="rounded-2xl"] {
+    position: relative;
+    overflow: hidden;
+}
+
+div[class*="h-36"][class*="rounded-2xl"]::before,
+div[class*="h-40"][class*="rounded-2xl"]::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
+@media print {
+    aside,
+    nav,
+    .fixed.inset-y-0.left-0 {
+        display: none !important;
+    }
+    
+    .ml-64 {
+        margin-left: 0 !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+}
