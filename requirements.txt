@@ -7,3 +7,4 @@ certifi
 django-storages
 django-allauth
 django-cors-headers
+requests
