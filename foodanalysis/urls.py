@@ -126,7 +126,7 @@ def health_check(request):
 
 urlpatterns = [
     # Health check for Railway - simple endpoint, no database dependency
-    path('api/health/', health, name='health-check'),
+    path('api/health/', health_check, name='health-check'),
     
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
