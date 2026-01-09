@@ -11,3 +11,4 @@ requests
 PyJWT>=2.8.0
 cryptography
 djangorestframework
+djangorestframework-simplejwt
