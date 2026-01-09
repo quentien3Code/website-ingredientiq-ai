@@ -1176,56 +1176,26 @@ See [Configuration & Environment Variables](#9-configuration--environment-variab
 
 ### 9.1 Required Environment Variables
 
-Create a `.env` file in the project root:
+All environment variables should be set in Railway dashboard, NOT in code files.
 
-```bash
-# Django
-SECRET_KEY=your-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=ingredientiq.ai,18.188.184.213
+**Required variables for Railway deployment:**
 
-# Database
-POSTGRES_DB=foodai
-POSTGRES_USER=foodai_user
-POSTGRES_PASSWORD=your-secure-password
-DB_HOST=foodai-db
-DB_PORT=5432
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Django secret key (generate with `secrets.token_urlsafe(50)`) |
+| `DEBUG` | Set to `False` for production |
+| `ALLOWED_HOSTS` | `ingredientiq.ai,www.ingredientiq.ai` |
+| `DATABASE_URL` | Auto-set by Railway PostgreSQL |
+| `EMAIL_HOST_USER` | Gmail address for sending emails |
+| `EMAIL_HOST_PASSWORD` | Gmail app password |
+| `AWS_ACCESS_KEY_ID` | AWS S3 access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS S3 secret key |
+| `AWS_STORAGE_BUCKET_NAME` | S3 bucket name |
+| `STRIPE_SECRET_KEY` | Stripe live secret key |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe live publishable key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 
-# OpenAI
-OPENAI_API_KEY=sk-proj-...
-
-# AWS S3 (if using)
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_STORAGE_BUCKET_NAME=...
-AWS_S3_REGION_NAME=us-east-1
-
-# Stripe
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Firebase (Notifications)
-FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
-
-# Email
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-
-# Twilio (SMS)
-TWILIO_ACCOUNT_SID=...
-TWILIO_AUTH_TOKEN=...
-TWILIO_PHONE_NUMBER=...
-
-# External APIs (Optional)
-USDA_API_KEY=...
-EDAMAM_APP_ID=...
-EDAMAM_APP_KEY=...
-SPOONACULAR_KEY=...
-```
+**Note:** Firebase and Twilio are no longer needed (mobile app discontinued).
 
 ### 9.2 Django Settings
 

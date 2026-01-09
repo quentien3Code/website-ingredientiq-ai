@@ -31,37 +31,31 @@ This guide covers deploying the IngredientIQ backend to [Railway.com](https://ra
 In your Railway project settings, add these environment variables:
 
 ```bash
-# Required
-DJANGO_SECRET_KEY=<generate-a-new-secure-key>
+# Required - Set these in Railway dashboard, NOT in code
+DJANGO_SECRET_KEY=<set-in-railway-dashboard>
 DEBUG=False
 ALLOWED_HOSTS=ingredientiq.ai,www.ingredientiq.ai
 
-# Email
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+# Email - Configure in Railway dashboard
+EMAIL_HOST_USER=<set-in-railway-dashboard>
+EMAIL_HOST_PASSWORD=<set-in-railway-dashboard>
 
-# AWS S3 (for file storage)
-AWS_ACCESS_KEY_ID=your-new-aws-key
-AWS_SECRET_ACCESS_KEY=your-new-aws-secret
-AWS_STORAGE_BUCKET_NAME=your-bucket-name
+# AWS S3 (for file storage) - Configure in Railway dashboard
+AWS_ACCESS_KEY_ID=<set-in-railway-dashboard>
+AWS_SECRET_ACCESS_KEY=<set-in-railway-dashboard>
+AWS_STORAGE_BUCKET_NAME=<set-in-railway-dashboard>
 AWS_S3_REGION_NAME=us-east-2
 
-# Stripe (payments)
-STRIPE_SECRET_KEY=sk_live_xxxx
-STRIPE_PUBLISHABLE_KEY=pk_live_xxxx
-STRIPE_WEBHOOK_SECRET=whsec_xxxx
-STRIPE_MONTHLY_PRICE_ID=price_xxxx
-STRIPE_YEARLY_PRICE_ID=price_xxxx
+# Stripe (payments) - Configure in Railway dashboard
+STRIPE_SECRET_KEY=<set-in-railway-dashboard>
+STRIPE_PUBLISHABLE_KEY=<set-in-railway-dashboard>
+STRIPE_WEBHOOK_SECRET=<set-in-railway-dashboard>
+STRIPE_MONTHLY_PRICE_ID=<set-in-railway-dashboard>
+STRIPE_YEARLY_PRICE_ID=<set-in-railway-dashboard>
 
-# OAuth
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=your-google-client-id
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=your-google-secret
-
-# External APIs
-USDA_API_KEY=your-usda-key
-OPENAI_API_KEY=your-openai-key
-GOOGLE_CUSTOM_SEARCH_API_KEY=your-search-key
-GOOGLE_CUSTOM_SEARCH_ENGINE_ID=your-engine-id
+# OAuth - Configure in Railway dashboard
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=<set-in-railway-dashboard>
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=<set-in-railway-dashboard>
 ```
 
 ### 4. Generate a New Django Secret Key
