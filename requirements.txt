@@ -6,7 +6,6 @@ PyJWT==2.8.0
 easyocr==1.7.2
 numpy==1.24.1
 open-clip-torch==2.30.0
-opencv-python==4.11.0.86
 opencv-python-headless==4.11.0.86
 dotenv==0.9.9
 whitenoise==6.7.0
