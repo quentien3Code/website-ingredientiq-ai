@@ -48,6 +48,12 @@ RAILWAY_HEALTHCHECK_HOST = os.getenv('RAILWAY_HEALTHCHECK_HOST', 'healthcheck.ra
 if RAILWAY_HEALTHCHECK_HOST and RAILWAY_HEALTHCHECK_HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RAILWAY_HEALTHCHECK_HOST)
 
+# Railway injects the public domain of the service (e.g. <service>.up.railway.app).
+# Auto-allowlist it so both healthchecks and real traffic don't get blocked by DisallowedHost.
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN and RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+
 # Correct HTTPS detection behind reverse proxies (Railway/Cloudflare/etc)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True

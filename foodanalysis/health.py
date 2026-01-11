@@ -1,8 +1,12 @@
 import os
+import logging
 
 from django.db import connections
 from django.db.utils import OperationalError
 from django.http import HttpResponse
+
+
+logger = logging.getLogger(__name__)
 
 
 def healthz(_request):
@@ -42,6 +46,7 @@ def readyz(_request):
     ]
     for env_name in required_env:
         if not os.getenv(env_name):
+            logger.info("readyz not ready: missing env %s", env_name)
             return HttpResponse("NOT_READY", status=503, content_type="text/plain")
 
     check_db_setting = os.getenv("READYZ_CHECK_DB", "auto").strip().lower()
@@ -59,8 +64,10 @@ def readyz(_request):
                 cursor.execute("SELECT 1")
                 cursor.fetchone()
         except OperationalError:
+            logger.info("readyz not ready: database OperationalError")
             return HttpResponse("NOT_READY", status=503, content_type="text/plain")
         except Exception:
+            logger.exception("readyz not ready: database check failed")
             return HttpResponse("NOT_READY", status=503, content_type="text/plain")
 
     return HttpResponse("OK", status=200, content_type="text/plain")
