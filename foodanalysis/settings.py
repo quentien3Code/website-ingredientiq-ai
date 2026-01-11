@@ -52,6 +52,15 @@ if RAILWAY_HEALTHCHECK_HOST and RAILWAY_HEALTHCHECK_HOST not in ALLOWED_HOSTS:
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
+# Railway healthchecks hit the container over plain HTTP. If SECURE_SSL_REDIRECT
+# is enabled, Django may return a 301/302 instead of a 200, causing deploy cutover
+# to fail. Exempt health endpoints from redirects.
+SECURE_REDIRECT_EXEMPT = [
+    r'^healthz/?$',
+    r'^readyz/?$',
+    r'^api/health/?$',
+]
+
 
 # Application definition
 
