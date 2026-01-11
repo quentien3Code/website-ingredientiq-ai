@@ -34,7 +34,7 @@ In your Railway project settings, add these environment variables:
 # Required - Set these in Railway dashboard, NOT in code
 DJANGO_SECRET_KEY=<set-in-railway-dashboard>
 DEBUG=False
-ALLOWED_HOSTS=ingredientiq.ai,www.ingredientiq.ai
+DJANGO_ALLOWED_HOSTS=ingredientiq.ai,www.ingredientiq.ai
 
 # Email - Configure in Railway dashboard
 EMAIL_HOST_USER=<set-in-railway-dashboard>
@@ -103,13 +103,24 @@ The following files configure Railway deployment:
 
 ## Health Check
 
-Railway performs health checks at `/api/health/`. This endpoint:
-- Checks database connectivity
-- Returns JSON status
+Use Railway healthchecks as a deploy-time cutover gate.
+
+- Liveness: `/healthz` (process up, no dependencies)
+- Readiness: `/readyz` (safe to receive traffic; returns 503 until ready)
+
+Railway is configured (via `railway.json`) to healthcheck `/readyz` before switching traffic.
+
+Environment controls for readiness:
+
+- `READYZ_REQUIRED_ENV`: comma-separated env var names that must be set
+- `READYZ_CHECK_DB`: `true` / `false` / `auto` (default `auto`, checks DB only if `DATABASE_URL` is set)
+
+Back-compat: `/api/health/` still returns 200 (liveness).
 
 ## Post-Deployment Checklist
 
-- [ ] Verify health check: `https://www.ingredientiq.ai/api/health/`
+- [ ] Verify liveness: `https://www.ingredientiq.ai/healthz`
+- [ ] Verify readiness: `https://www.ingredientiq.ai/readyz`
 - [ ] Test admin panel: `https://www.ingredientiq.ai/admin-panel/`
 - [ ] Test public website: `https://www.ingredientiq.ai/`
 - [ ] Test API endpoints: `https://www.ingredientiq.ai/foodapp/`

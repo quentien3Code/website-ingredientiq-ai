@@ -1,0 +1,44 @@
+name: PR Availability Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  availability_gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start Django server
+        run: |
+          nohup python manage.py runserver 127.0.0.1:8000 > django.log 2>&1 &
+        env:
+          DJANGO_SECRET_KEY: 'test-ci-key-with-sufficient-length-and-complexity-12345!@#$%'
+          DEBUG: 'True'
+          DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+          READYZ_CHECK_DB: 'false'
+          SECURE_SSL_REDIRECT: 'False'
+          CSRF_COOKIE_SECURE: 'False'
+          SESSION_COOKIE_SECURE: 'False'
+
+      - name: Gate on /healthz and /readyz
+        run: |
+          python tools/healthcheck.py http://127.0.0.1:8000/healthz --timeout 30 --interval 1
+          python tools/healthcheck.py http://127.0.0.1:8000/readyz --timeout 30 --interval 1

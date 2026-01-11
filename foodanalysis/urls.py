@@ -24,8 +24,8 @@ from django.http import HttpResponse, FileResponse
 import os
 from django.views.generic import TemplateView
 
-# Import standalone health check (isolated, no dependencies)
-from .health import health
+# Health endpoints (deployment gating + diagnostics)
+from .health import healthz, readyz
 
 # =============================================================================
 # Frontend Asset Paths Configuration
@@ -114,13 +114,15 @@ def serve_logo(request, filename):
     else:
         return HttpResponse('Logo not found', status=404)
 
-def health_check(request):
-    """Health check endpoint for Railway deployment - always returns 200"""
-    return HttpResponse('OK', status=200)
-
 urlpatterns = [
-    # Health check for Railway - simple endpoint, no database dependency
-    path('api/health/', health_check, name='health-check'),
+    # Liveness + readiness (recommended for Railway healthcheck: /readyz)
+    path('healthz', healthz, name='healthz'),
+    path('healthz/', healthz),
+    path('readyz', readyz, name='readyz'),
+    path('readyz/', readyz),
+
+    # Back-compat: previous Railway healthcheck path
+    path('api/health/', healthz, name='health-check'),
     
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/

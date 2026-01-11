@@ -7,12 +7,13 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     
     steps:
@@ -34,10 +35,30 @@ jobs:
         env:
           DJANGO_SECRET_KEY: 'test-ci-key-with-sufficient-length-and-complexity-12345!@#$%'
           DEBUG: 'False'
-          ALLOWED_HOSTS: 'localhost'
+          DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+          SECURE_SSL_REDIRECT: 'False'
+          CSRF_COOKIE_SECURE: 'False'
+          SESSION_COOKIE_SECURE: 'False'
+
+      - name: Start Django server
+        run: |
+          nohup python manage.py runserver 127.0.0.1:8000 > django.log 2>&1 &
+        env:
+          DJANGO_SECRET_KEY: 'test-ci-key-with-sufficient-length-and-complexity-12345!@#$%'
+          DEBUG: 'True'
+          DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+          READYZ_CHECK_DB: 'false'
+          SECURE_SSL_REDIRECT: 'False'
+          CSRF_COOKIE_SECURE: 'False'
+          SESSION_COOKIE_SECURE: 'False'
+
+      - name: Gate on /healthz and /readyz
+        run: |
+          python tools/healthcheck.py http://127.0.0.1:8000/healthz --timeout 30 --interval 1
+          python tools/healthcheck.py http://127.0.0.1:8000/readyz --timeout 30 --interval 1
           
   deploy:
-    needs: test
+    needs: ci
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
@@ -51,3 +72,26 @@ jobs:
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  post_deploy_smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Smoke check production /readyz
+        env:
+          PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+        run: |
+          if [ -z "$PRODUCTION_BASE_URL" ]; then
+            echo "Missing PRODUCTION_BASE_URL secret (e.g. https://<your-railway-domain>)."
+            exit 1
+          fi
+          python tools/healthcheck.py "$PRODUCTION_BASE_URL/readyz" --timeout 120 --interval 2
