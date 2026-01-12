@@ -1066,7 +1066,7 @@ services:
     environment:
       POSTGRES_DB: foodai
       POSTGRES_USER: foodai_user
-      POSTGRES_PASSWORD: pass098foodai1123
+      POSTGRES_PASSWORD: <set-in-environment>
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:

@@ -219,7 +219,7 @@ import certifi
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = 'support@serviceconnect.nl'     # replace with your actual email
-# EMAIL_HOST_PASSWORD = 'gB;@-H6BcF@tNh?' # replace with actual password
+# EMAIL_HOST_PASSWORD should be provided via environment variables
 # DEFAULT_FROM_EMAIL = 'AI IngredientIQ <support@serviceconnect.nl>'
 
 
@@ -237,8 +237,7 @@ EMAIL_USE_SSL = False
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = False
-# EMAIL_HOST_USER = 'kajalmittalkm62@gmail.com' # Your Gmail Address
-# EMAIL_HOST_PASSWORD = 'pifq dehh aaca asey' # App password (not your Gmail password)
+# EMAIL_HOST_USER and EMAIL_HOST_PASSWORD should be provided via environment variables
 
 
 
