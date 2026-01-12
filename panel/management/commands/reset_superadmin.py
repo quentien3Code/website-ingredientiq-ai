@@ -5,6 +5,7 @@ from getpass import getpass
 
 from django.core.management.base import BaseCommand, CommandError
 
+from foodinfo.models import User
 from panel.models import SuperAdmin
 
 
@@ -43,22 +44,29 @@ class Command(BaseCommand):
         password = self._get_password(options)
 
         admin = SuperAdmin.objects.filter(email=email).first()
+        created = False
 
         if admin is None:
-            admin = SuperAdmin.objects.create_user(email=email, full_name=full_name, password=password)
-            created = True
-        else:
-            if full_name and admin.full_name != full_name:
-                admin.full_name = full_name
-            admin.set_password(password)
-            created = False
+            # If a regular User already exists with this email, "upgrade" it to SuperAdmin
+            # (multi-table inheritance requires creating the child table row).
+            base_user = User.objects.filter(email=email).first()
+            if base_user is not None:
+                admin = SuperAdmin.objects.create(user_ptr=base_user, is_super_admin=True)
+                created = True
+            else:
+                admin = SuperAdmin.objects.create_user(email=email, full_name=full_name, password=password)
+                created = True
+
+        if full_name and admin.full_name != full_name:
+            admin.full_name = full_name
+        admin.set_password(password)
 
         # Ensure admin privileges for both Django admin and control-panel auth
         admin.is_staff = True
         admin.is_superuser = True
         admin.is_super_admin = True
         admin.is_active = True
-        admin.save(update_fields=["full_name", "password", "is_staff", "is_superuser", "is_super_admin", "is_active"])
+        admin.save()
 
         if created:
             self.stdout.write(self.style.SUCCESS(f"Created SuperAdmin: {email}"))
