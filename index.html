@@ -208,6 +208,35 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <title>IngredientIQ™ — Real-Time Ingredient Decision Support | AI Food Scanner | Free Global Access</title>
+    <script>
+        (function () {
+            'use strict';
+
+            var REWRITE_FROM_HOSTS = ['https://ingredientiq.ai', 'https://www.ingredientiq.ai'];
+            var TARGET_ORIGIN = window.location.origin;
+
+            function rewriteUrl(url) {
+                if (typeof url !== 'string') return url;
+                for (var i = 0; i < REWRITE_FROM_HOSTS.length; i++) {
+                    var from = REWRITE_FROM_HOSTS[i];
+                    if (url.indexOf(from) === 0) {
+                        return TARGET_ORIGIN + url.slice(from.length);
+                    }
+                }
+                return url;
+            }
+
+            var originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function (method, url, async, user, password) {
+                return originalXHROpen.call(this, method, rewriteUrl(url), async !== false, user, password);
+            };
+
+            var originalFetch = window.fetch;
+            window.fetch = function (url, options) {
+                return originalFetch.call(this, rewriteUrl(url), options);
+            };
+        })();
+    </script>
     <script defer="defer" src="/static/js/main.75def15d.js"></script>
     <link href="/static/css/main.f056d19f.css" rel="stylesheet">
 </head>

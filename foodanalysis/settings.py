@@ -54,6 +54,11 @@ RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
 if RAILWAY_PUBLIC_DOMAIN and RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
 
+# If RAILWAY_PUBLIC_DOMAIN isn't injected, allow Railway's default public domain pattern
+# so the app works immediately on the generated *.up.railway.app URL.
+if '.up.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.up.railway.app')
+
 # Correct HTTPS detection behind reverse proxies (Railway/Cloudflare/etc)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True

@@ -38,23 +38,33 @@ ADMIN_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'admin')
 
 def serve_react_app(request, path=None):
     """Serve the React app's index.html for all routes"""
-    build_path = os.path.join(WEBSITE_BUILD_PATH, 'index.html')
-    try:
-        with open(build_path, 'r') as f:
-            content = f.read()
-        return HttpResponse(content, content_type='text/html')
-    except FileNotFoundError:
-        return HttpResponse('Build folder not found. Please run npm run build first.', status=404)
+    candidate_paths = [
+        os.path.join(WEBSITE_BUILD_PATH, 'index.html'),
+        os.path.join(settings.BASE_DIR, 'index.html'),
+    ]
+
+    for build_path in candidate_paths:
+        if os.path.exists(build_path):
+            with open(build_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+
+    return HttpResponse('Build folder not found. Please run npm run build first.', status=404)
 
 def serve_react_admin_panel(request, path=None):
     """Serve the React admin panel's index.html for all routes"""
-    build_path = os.path.join(ADMIN_BUILD_PATH, 'index.html')
-    try:
-        with open(build_path, 'r') as f:
-            content = f.read()
-        return HttpResponse(content, content_type='text/html')
-    except FileNotFoundError:
-        return HttpResponse('Build folder not found. Please run npm run build first.', status=404)
+    candidate_paths = [
+        os.path.join(ADMIN_BUILD_PATH, 'index.html'),
+        os.path.join(ADMIN_BUILD_PATH, 'build', 'index.html'),
+    ]
+
+    for build_path in candidate_paths:
+        if os.path.exists(build_path):
+            with open(build_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+
+    return HttpResponse('Build folder not found. Please run npm run build first.', status=404)
 
 def serve_build_static(request, path):
     """Serve static files from the React build folder"""

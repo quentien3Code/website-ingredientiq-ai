@@ -149,6 +149,9 @@ logs/
 *.tmp
 *.temp
 
+# Railway local status snapshots
+.railway_status.json
+
 # ===================
 # SECURITY - NEVER COMMIT THESE
 # ===================
