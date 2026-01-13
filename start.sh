@@ -41,6 +41,13 @@ if ! "$PYTHON_CMD" manage.py migrate --noinput; then
 	echo "Warning: migrations failed, continuing..."
 fi
 
+# Create/reset superadmin if ADMIN_PASSWORD is set (one-time setup)
+if [ -n "${ADMIN_PASSWORD}" ]; then
+	ADMIN_EMAIL="${ADMIN_EMAIL:-admin@ingredientiq.ai}"
+	echo "Creating/resetting superadmin: $ADMIN_EMAIL"
+	"$PYTHON_CMD" manage.py reset_superadmin --email "$ADMIN_EMAIL" --password-env ADMIN_PASSWORD || echo "Warning: superadmin setup failed"
+fi
+
 # Start gunicorn (this must succeed)
 echo "Starting gunicorn on port $APP_PORT..."
 exec "$PYTHON_CMD" -m gunicorn foodanalysis.wsgi:application --bind "0.0.0.0:$APP_PORT" --workers 2 --timeout 120
