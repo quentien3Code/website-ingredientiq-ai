@@ -400,6 +400,8 @@ if RAILWAY_PUBLIC_DOMAIN:
 CSRF_TRUSTED_ORIGINS = [
     "https://ingredientiq.ai",
     "https://www.ingredientiq.ai",
+    "https://*.ingredientiq.ai",
+    "https://*.up.railway.app",
     "http://localhost:3000",
     "http://localhost:8000",
 ]
