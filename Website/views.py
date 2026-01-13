@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from django.core.exceptions import ValidationError
-from .models import DownloadPDF, Stayconnected, Contact, TermsandConditions, PrivacyPolicy, Blogs, Faqs, Testimonials, Aboutus, Platforms, Info,Leadership, Video, relatedposts, DownloadPDF
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from .models import DownloadPDF, Stayconnected, Contact, TermsandConditions, PrivacyPolicy, Blogs, BlogCategory, BlogTag, BlogAuthor, Faqs, Testimonials, Aboutus, Platforms, Info, Leadership, Video, relatedposts
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,6 +13,39 @@ from bs4 import BeautifulSoup
 import re
 
 # Create your views here.
+
+
+# ============================================
+# BRITA CMS - SLUG VALIDATION API
+# ============================================
+
+@require_GET
+def validate_slug(request):
+    """
+    API endpoint to validate slug uniqueness for Brita CMS.
+    Returns JSON: { "exists": true/false, "slug": "...", "existing_id": null|id }
+    """
+    slug = request.GET.get('slug', '').strip()
+    exclude_id = request.GET.get('exclude_id', '').strip()
+    
+    if not slug:
+        return JsonResponse({'exists': False, 'slug': '', 'error': 'No slug provided'})
+    
+    # Check if slug exists
+    qs = Blogs.objects.filter(slug=slug)
+    
+    # Exclude current post if editing
+    if exclude_id and exclude_id.isdigit():
+        qs = qs.exclude(id=int(exclude_id))
+    
+    exists = qs.exists()
+    existing_id = qs.values_list('id', flat=True).first() if exists else None
+    
+    return JsonResponse({
+        'exists': exists,
+        'slug': slug,
+        'existing_id': existing_id
+    })
 
 def strip_html_tags(text):
     """
@@ -307,41 +342,82 @@ class BlogsView(APIView):
         
         return text
     
-    def post(self,request):
-        from bs4 import BeautifulSoup
+    def post(self, request):
+        """
+        Create a new blog post using Brita CMS fields.
+        Accepts both new Brita fields and legacy fields for backwards compatibility.
+        """
+        # Get data - support both new and legacy field names
+        title = request.data.get('title', '')
+        raw_draft = request.data.get('raw_draft') or request.data.get('body') or request.data.get('description_1', '')
         
-        title = request.data.get('title')
-        image = request.FILES.get('image')  # Handle file upload
-        description_1 = request.data.get('description_1')
-        description_2 = request.data.get('description_2')
-        quote = request.data.get('quote')
-        author = request.data.get('author')
-        date = request.data.get('date')
-        time_to_read = request.data.get('time_to_read')
-        category = request.data.get('category')
+        # Handle legacy fields by converting to raw_draft
+        if not raw_draft:
+            desc1 = request.data.get('description_1', '')
+            desc2 = request.data.get('description_2', '')
+            if desc1 or desc2:
+                raw_draft = self._html_to_markdown(desc1 or '') + '\n\n' + self._html_to_markdown(desc2 or '')
         
-        # Convert HTML to markdown format (preserves formatting without HTML tags)
-        if description_1:
-            description_1 = self._html_to_markdown(description_1)
-        if description_2:
-            description_2 = self._html_to_markdown(description_2)
-        if quote:
-            quote = self._html_to_markdown(quote)
-        # Validate that image is a file, not a URL string
+        image = request.FILES.get('image')
+        image_alt_text = request.data.get('image_alt_text', '')
+        excerpt = request.data.get('excerpt', '')
+        slug = request.data.get('slug', '')
+        status_value = request.data.get('status', 'draft')
+        
+        # Author - try FK first, fallback to string
+        author_id = request.data.get('author_entity_id') or request.data.get('author_id')
+        author_name = request.data.get('author', '')  # Legacy string field
+        
+        # Category - try FK first, fallback to string
+        category_id = request.data.get('category_new_id') or request.data.get('category_id')
+        category_name = request.data.get('category', '')  # Legacy string field
+        
+        # Publish date
+        publish_date = request.data.get('publish_date') or request.data.get('date')
+        
+        # Validate image
         if image and not hasattr(image, 'read'):
             return Response({'error': 'Image must be a file upload, not a URL'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            blog = Blogs.objects.create(title=title,image=image,description_1=description_1,description_2=description_2,quote=quote,author=author,date=date,time_to_read=time_to_read,category=category)
+            # Create blog with Brita CMS fields
+            blog = Blogs(
+                title=title,
+                raw_draft=raw_draft,
+                image=image,
+                image_alt_text=image_alt_text,
+                excerpt=excerpt,
+                slug=slug or None,  # Let model generate if empty
+                status=status_value,
+                # Legacy fields for backwards compatibility
+                author=author_name,
+                category=category_name,
+            )
+            
+            # Set FK relations if provided
+            if author_id:
+                blog.author_entity_id = author_id
+            if category_id:
+                blog.category_new_id = category_id
+            if publish_date:
+                from django.utils.dateparse import parse_datetime, parse_date
+                if isinstance(publish_date, str):
+                    blog.publish_date = parse_datetime(publish_date) or parse_date(publish_date)
+                else:
+                    blog.publish_date = publish_date
+            
+            blog.save()  # Triggers Brita pipeline
+            
             return Response({
-                'message':'Blog created',
+                'message': 'Blog created',
                 'blog_id': blog.id,
+                'slug': blog.slug,
                 'image_url': blog.get_image_url()
-            },status=status.HTTP_201_CREATED)
-        except IntegrityError:
-            return Response({'error':'Blog creation failed due to database constraint'},status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_201_CREATED)
+        except IntegrityError as e:
+            return Response({'error': f'Blog creation failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
-            return Response({'error':str(e)},status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
     def get(self,request,id=None):
@@ -351,102 +427,241 @@ class BlogsView(APIView):
         if id:
             try:
                 blog = get_object_or_404(Blogs, id=id)
-                data = {
-                    'id': blog.id,
-                    'title': blog.title,
-                    'image': blog.get_image_url(),
-                    'description_1': blog.description_1,
-                    'description_2': blog.description_2,
-                    'quote': blog.quote,
-                    'author': blog.author,
-                    'date': blog.date,
-                    'time_to_read': blog.time_to_read,
-                    'category': blog.category,
-                    'created_at': blog.created_at,
-                    'updated_at': blog.updated_at
-                }
+                data = self._serialize_blog(blog, detail=True)
                 return Response({'blog': data}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # List endpoint with optional category filter
-        category = request.query_params.get('category')
+        category_slug = request.query_params.get('category')
+        status_filter = request.query_params.get('status', 'published')  # Default to published only
+        
         blogs = Blogs.objects.all()
-        if category:
-            blogs = blogs.filter(category=category)
+        
+        # Filter by status
+        if status_filter == 'published':
+            blogs = blogs.filter(status='published')
+        elif status_filter != 'all':
+            blogs = blogs.filter(status=status_filter)
+        
+        # Filter by category (new FK or legacy)
+        if category_slug:
+            blogs = blogs.filter(
+                models.Q(category_new__slug=category_slug) | 
+                models.Q(category=category_slug)
+            )
 
-        # Category counts
+        # Category counts (using new FK)
+        from django.db.models import Count
         category_counts = {}
-        all_categories = Blogs.objects.values_list('category', flat=True).distinct()
-        for cat in all_categories:
-            category_counts[cat] = Blogs.objects.filter(category=cat).count()
+        categories = BlogCategory.objects.annotate(count=Count('blog_posts')).values('slug', 'name', 'count')
+        for cat in categories:
+            category_counts[cat['slug']] = {'name': cat['name'], 'count': cat['count']}
 
-        data = []
-        for blog in blogs:
-            data.append({
-                'id': blog.id,
-                'title': blog.title,
-                'image': blog.get_image_url(),
-                'description_1': blog.description_1,
-                'description_2': blog.description_2,
-                'quote': blog.quote,
-                'author': blog.author,
-                'date': blog.date,
-                'time_to_read': blog.time_to_read,
-                'category': blog.category,
-                'created_at': blog.created_at,
-                'updated_at': blog.updated_at
-            })
+        data = [self._serialize_blog(blog, detail=False) for blog in blogs]
 
         return Response({
             'blogs': data,
             'category_counts': category_counts,
             'total_blogs': len(data),
-            'filtered_category': category if category else None
+            'filtered_category': category_slug if category_slug else None
         }, status=status.HTTP_200_OK)
-
-    def put(self,request,id=None):
-        from bs4 import BeautifulSoup
+    
+    def _serialize_blog(self, blog, detail=False):
+        """
+        Serialize a blog post with Brita CMS fields.
+        Returns rich data for detail view, compact for list view.
+        """
+        # Author info
+        author_data = None
+        if blog.author_entity:
+            author_data = {
+                'id': blog.author_entity.id,
+                'name': blog.author_entity.name,
+                'slug': blog.author_entity.slug,
+                'bio': blog.author_entity.bio if detail else None,
+                'avatar': blog.author_entity.get_avatar_url(),
+                'job_title': blog.author_entity.job_title,
+            }
         
+        # Category info
+        category_data = None
+        if blog.category_new:
+            category_data = {
+                'id': blog.category_new.id,
+                'name': blog.category_new.name,
+                'slug': blog.category_new.slug,
+            }
+        
+        # Tags
+        tags_data = list(blog.tags.values('id', 'name', 'slug')) if detail else []
+        
+        # Base data (for list views)
+        data = {
+            'id': blog.id,
+            'title': blog.title,
+            'slug': blog.slug,
+            'excerpt': blog.excerpt,
+            'image': blog.get_image_url(),
+            'image_alt_text': blog.image_alt_text,
+            
+            # Dates - use publish_date, fallback to date, then created_at
+            'publish_date': blog.publish_date.isoformat() if blog.publish_date else (
+                blog.date.isoformat() if blog.date else blog.created_at.isoformat()
+            ),
+            'date': blog.publish_date.isoformat() if blog.publish_date else (
+                blog.date.isoformat() if blog.date else blog.created_at.isoformat()
+            ),  # Legacy field for backwards compatibility
+            
+            # Reading time (auto-calculated)
+            'reading_time_minutes': blog.reading_time_minutes or 1,
+            'time_to_read': blog.get_reading_time_display(),  # "X min read" format
+            
+            # Author & Category
+            'author': author_data if author_data else {'name': blog.author or 'Anonymous'},
+            'category': category_data if category_data else {'name': blog.category or 'Uncategorized'},
+            
+            # Status
+            'status': blog.status,
+            'is_featured': blog.is_featured,
+            
+            # Timestamps
+            'created_at': blog.created_at.isoformat(),
+            'updated_at': blog.updated_at.isoformat(),
+            
+            # Legacy fields for backwards compatibility
+            'description_1': blog.description_1 or strip_html_tags(blog.excerpt),
+            'quote': blog.pull_quote or blog.quote,
+        }
+        
+        # Extended data for detail views
+        if detail:
+            data.update({
+                # Main content
+                'body': blog.body_html or blog.body,
+                'body_html': blog.body_html,
+                'description_2': blog.description_2 or blog.body_html or blog.body,  # Legacy
+                
+                # Key takeaways
+                'key_takeaways': blog.key_takeaways or [],
+                
+                # SEO
+                'meta_title': blog.meta_title or blog.title,
+                'meta_description': blog.meta_description or blog.excerpt,
+                'canonical_url': blog.canonical_url,
+                
+                # Social
+                'og_title': blog.og_title or blog.title,
+                'og_description': blog.og_description or blog.excerpt,
+                'og_image': blog.og_image.url if blog.og_image else blog.get_image_url(),
+                
+                # Structure
+                'toc': blog.toc_json or [],
+                'word_count': blog.word_count or 0,
+                
+                # Related
+                'tags': tags_data,
+                'related_posts': [
+                    {'id': rp.id, 'title': rp.title, 'slug': rp.slug, 'image': rp.get_image_url()}
+                    for rp in blog.related_posts.all()[:3]
+                ] if detail else [],
+                
+                # Image details
+                'image_caption': blog.image_caption,
+                'image_credit': blog.image_credit,
+                
+                # Pull quote
+                'pull_quote': blog.pull_quote,
+            })
+        
+        return data
+
+    def put(self, request, id=None):
+        """
+        Update a blog post using Brita CMS fields.
+        Accepts both new Brita fields and legacy fields for backwards compatibility.
+        """
         if id is None:
             id = request.query_params.get('pk') or request.query_params.get('id')
         if id is None:
             return Response({'error': 'ID is required for update'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             blog = get_object_or_404(Blogs, id=id)
-            blog.title = request.data.get('title', blog.title)
-            # Handle file upload for image
+            
+            # Title
+            if 'title' in request.data:
+                blog.title = request.data['title']
+                blog.title_locked = True  # Lock since manually edited
+            
+            # Raw draft / body content
+            if 'raw_draft' in request.data:
+                blog.raw_draft = request.data['raw_draft']
+            elif 'body' in request.data:
+                blog.raw_draft = self._html_to_markdown(request.data['body'])
+            elif 'description_1' in request.data or 'description_2' in request.data:
+                # Legacy: combine description fields
+                desc1 = self._html_to_markdown(request.data.get('description_1', '') or '')
+                desc2 = self._html_to_markdown(request.data.get('description_2', '') or '')
+                blog.raw_draft = (desc1 + '\n\n' + desc2).strip()
+            
+            # Image handling
             if 'image' in request.FILES:
                 image_file = request.FILES['image']
-                # Validate that image is a file, not a URL string
                 if not hasattr(image_file, 'read'):
                     return Response({'error': 'Image must be a file upload, not a URL'}, status=status.HTTP_400_BAD_REQUEST)
                 blog.image = image_file
+            if 'image_alt_text' in request.data:
+                blog.image_alt_text = request.data['image_alt_text']
             
-            # Convert HTML to markdown format before saving
-            description_1 = request.data.get('description_1', blog.description_1)
-            if description_1:
-                description_1 = self._html_to_markdown(description_1)
-            blog.description_1 = description_1
+            # Excerpt
+            if 'excerpt' in request.data:
+                blog.excerpt = request.data['excerpt']
+                blog.excerpt_locked = True
             
-            description_2 = request.data.get('description_2', blog.description_2)
-            if description_2:
-                description_2 = self._html_to_markdown(description_2)
-            blog.description_2 = description_2
+            # Slug
+            if 'slug' in request.data:
+                blog.slug = request.data['slug']
+                blog.slug_locked = True
             
-            quote = request.data.get('quote', blog.quote)
-            if quote:
-                quote = self._html_to_markdown(quote)
-            blog.quote = quote
-            blog.author = request.data.get('author', blog.author)
-            blog.date = request.data.get('date', blog.date)
-            blog.time_to_read = request.data.get('time_to_read', blog.time_to_read)
-            blog.category = request.data.get('category', blog.category)
-            blog.save()
+            # Status
+            if 'status' in request.data:
+                blog.status = request.data['status']
+            
+            # Publish date
+            if 'publish_date' in request.data or 'date' in request.data:
+                from django.utils.dateparse import parse_datetime, parse_date
+                date_value = request.data.get('publish_date') or request.data.get('date')
+                if date_value:
+                    if isinstance(date_value, str):
+                        blog.publish_date = parse_datetime(date_value) or parse_date(date_value)
+                    else:
+                        blog.publish_date = date_value
+            
+            # Author - support FK or legacy string
+            if 'author_entity_id' in request.data or 'author_id' in request.data:
+                blog.author_entity_id = request.data.get('author_entity_id') or request.data.get('author_id')
+            if 'author' in request.data:
+                blog.author = request.data['author']  # Legacy field
+            
+            # Category - support FK or legacy string
+            if 'category_new_id' in request.data or 'category_id' in request.data:
+                blog.category_new_id = request.data.get('category_new_id') or request.data.get('category_id')
+            if 'category' in request.data:
+                blog.category = request.data['category']  # Legacy field
+            
+            # Pull quote
+            if 'pull_quote' in request.data or 'quote' in request.data:
+                blog.pull_quote = request.data.get('pull_quote') or request.data.get('quote')
+            
+            blog.save()  # Triggers Brita pipeline
+            
             return Response({
-                'message':'Blog updated',
+                'message': 'Blog updated',
+                'blog_id': blog.id,
+                'slug': blog.slug,
                 'image_url': blog.get_image_url()
-            },status=status.HTTP_200_OK)
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -461,7 +676,137 @@ class BlogsView(APIView):
             return Response({'message':'Blog deleted'},status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BlogBySlugView(APIView):
+    """
+    API endpoint to retrieve a blog post by its slug.
+    Used by the React frontend to fetch blog content for rendering.
+    """
     
+    def get(self, request, slug=None):
+        """Get a blog post by its slug"""
+        if not slug:
+            slug = request.query_params.get('slug')
+        
+        if not slug:
+            return Response({'error': 'Slug is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            blog = get_object_or_404(Blogs, slug=slug)
+            
+            # Check if blog is published (or allow preview with token)
+            preview_token = request.query_params.get('preview_token')
+            if blog.status != 'published' and str(blog.preview_token) != preview_token:
+                return Response({'error': 'Blog not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Reuse the serialization logic from BlogsView
+            data = self._serialize_blog(blog)
+            return Response({'blog': data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def _serialize_blog(self, blog):
+        """Serialize a blog post with full details"""
+        # Author info
+        author_data = None
+        if blog.author_entity:
+            author_data = {
+                'id': blog.author_entity.id,
+                'name': blog.author_entity.name,
+                'slug': blog.author_entity.slug,
+                'bio': blog.author_entity.bio,
+                'avatar': blog.author_entity.get_avatar_url(),
+                'job_title': blog.author_entity.job_title,
+            }
+        
+        # Category info
+        category_data = None
+        if blog.category_new:
+            category_data = {
+                'id': blog.category_new.id,
+                'name': blog.category_new.name,
+                'slug': blog.category_new.slug,
+            }
+        
+        # Tags
+        tags_data = list(blog.tags.values('id', 'name', 'slug'))
+        
+        return {
+            'id': blog.id,
+            'title': blog.title,
+            'slug': blog.slug,
+            'excerpt': blog.excerpt,
+            'image': blog.get_image_url(),
+            'image_alt_text': blog.image_alt_text,
+            'image_caption': blog.image_caption,
+            'image_credit': blog.image_credit,
+            
+            # Main content
+            'body': blog.body_html or blog.body,
+            'body_html': blog.body_html,
+            
+            # Dates
+            'publish_date': blog.publish_date.isoformat() if blog.publish_date else (
+                blog.date.isoformat() if blog.date else blog.created_at.isoformat()
+            ),
+            'date': blog.publish_date.isoformat() if blog.publish_date else (
+                blog.date.isoformat() if blog.date else blog.created_at.isoformat()
+            ),
+            
+            # Reading time
+            'reading_time_minutes': blog.reading_time_minutes or 1,
+            'time_to_read': blog.get_reading_time_display(),
+            'word_count': blog.word_count or 0,
+            
+            # Author & Category
+            'author': author_data if author_data else {'name': blog.author or 'Anonymous'},
+            'category': category_data if category_data else {'name': blog.category or 'Uncategorized'},
+            
+            # Status
+            'status': blog.status,
+            'is_featured': blog.is_featured,
+            
+            # Key takeaways
+            'key_takeaways': blog.key_takeaways or [],
+            
+            # SEO
+            'meta_title': blog.meta_title or blog.title,
+            'meta_description': blog.meta_description or blog.excerpt,
+            'canonical_url': blog.canonical_url or blog.get_full_url(),
+            
+            # Social
+            'og_title': blog.og_title or blog.title,
+            'og_description': blog.og_description or blog.excerpt,
+            'og_image': blog.og_image.url if blog.og_image else blog.get_image_url(),
+            
+            # Structure
+            'toc': blog.toc_json or [],
+            
+            # Related
+            'tags': tags_data,
+            'related_posts': [
+                {'id': rp.id, 'title': rp.title, 'slug': rp.slug, 'image': rp.get_image_url()}
+                for rp in blog.related_posts.all()[:3]
+            ],
+            
+            # Sources (for LLM/citation)
+            'sources': blog.sources_json or [],
+            
+            # Pull quote
+            'pull_quote': blog.pull_quote,
+            
+            # Timestamps
+            'created_at': blog.created_at.isoformat(),
+            'updated_at': blog.updated_at.isoformat(),
+            
+            # Legacy fields
+            'description_1': blog.description_1 or strip_html_tags(blog.excerpt),
+            'description_2': blog.description_2 or blog.body_html or blog.body,
+            'quote': blog.pull_quote or blog.quote,
+        }
+
+
 class FaqsView(APIView):
     def post(self,request):
         category = request.data.get('category')

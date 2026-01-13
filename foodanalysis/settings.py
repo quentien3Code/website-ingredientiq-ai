@@ -82,8 +82,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',  # SEO: XML sitemaps
     'foodinfo',
-    'storages',
+    # 'storages',  # Removed - no longer using AWS S3
     # 'social_django'
     'django.contrib.sites',
     'allauth',
@@ -93,6 +94,9 @@ INSTALLED_APPS = [
     'panel',
     'corsheaders',
     'Website',
+    # Enhanced Admin Experience
+    'django_ckeditor_5',  # Rich text editor
+    'simple_history',  # Revision history
     # 'django_celery_beat',  # Uncomment if using Celery for background tasks
     # 'foodinfo.apps.YourAppConfig',
 ]
@@ -109,6 +113,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',  # Revision tracking
     'foodanalysis.middleware.SecurityHeadersMiddleware',  # Custom security headers
     'foodanalysis.middleware.StaticFileMIMEMiddleware',  # Custom MIME type handling
     'foodanalysis.middleware.SEOHeadersMiddleware',  # SEO optimization headers
@@ -292,21 +297,34 @@ REST_FRAMEWORK = {
     ),
 }
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# =============================================================================
+# MEDIA FILES CONFIGURATION (Railway Local Storage)
+# =============================================================================
+# Using Django's default local file storage instead of AWS S3
+# Railway supports persistent volumes - mount to /app/media in production
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Django 4.2+ uses STORAGES dict for storage backends (replaces STATICFILES_STORAGE and DEFAULT_FILE_STORAGE)
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
-AWS_ACCESS_KEY_ID=os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY=os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME=os.getenv("AWS_STORAGE_BUCKET_NAME", "ingredientiq")
-AWS_S3_REGION_NAME=os.getenv("AWS_S3_REGION_NAME", "us-east-2")
-AWS_S3_CUSTOM_DOMAIN=os.getenv("AWS_S3_CUSTOM_DOMAIN", "ingredientiq.s3.us-east-2.amazonaws.com")
-DEFAULT_FILE_STORAGE = os.getenv("DEFAULT_FILE_STORAGE", "storages.backends.s3boto3.S3Boto3Storage")
-AWS_DEFAULT_ACL = None  # Disable ACL to avoid bucket compatibility issues
-AWS_S3_URL_PROTOCOL =os.getenv("AWS_S3_URL_PROTOCOL", "https")
-AWS_S3_USE_SSL = True
-AWS_S3_VERIFY = True
-AWS_S3_ADDRESSING_STYLE = 'virtual'
-AWS_S3_SIGNATURE_VERSION = 's3v4'
+# =============================================================================
+# AWS S3 CONFIGURATION (REMOVED - No longer using AWS)
+# =============================================================================
+# The following AWS settings have been removed as we're now using Railway's
+# local storage. If you need to re-enable S3 in the future, uncomment these:
+# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+# AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+# AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
@@ -404,6 +422,83 @@ USDA_API_KEY = os.getenv("USDA_API_KEY")
 # Google Custom Search API for blog search
 GOOGLE_CUSTOM_SEARCH_ENGINE_ID = os.getenv("GOOGLE_CUSTOM_SEARCH_ENGINE_ID", "a2e3976c052734bb6")
 GOOGLE_CUSTOM_SEARCH_API_KEY = os.getenv("GOOGLE_CUSTOM_SEARCH_API_KEY")
+
+# =============================================================================
+# CKEditor 5 Configuration (Rich Text Editor)
+# =============================================================================
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'underline', 'strikethrough', '|',
+            'link', 'blockQuote', 'code', 'codeBlock', '|',
+            'bulletedList', 'numberedList', 'todoList', '|',
+            'outdent', 'indent', '|',
+            'insertTable', 'mediaEmbed', '|',
+            'undo', 'redo', '|',
+            'sourceEditing',
+        ],
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+                {'model': 'heading4', 'view': 'h4', 'title': 'Heading 4', 'class': 'ck-heading_heading4'},
+            ]
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells']
+        },
+        'height': '400px',
+        'width': '100%',
+    },
+    'blog': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+            'link', 'blockQuote', 'code', 'codeBlock', '|',
+            'bulletedList', 'numberedList', 'todoList', '|',
+            'outdent', 'indent', 'alignment', '|',
+            'insertTable', 'mediaEmbed', 'insertImage', '|',
+            'horizontalLine', 'specialCharacters', '|',
+            'undo', 'redo', '|',
+            'sourceEditing', 'findAndReplace',
+        ],
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+                {'model': 'heading4', 'view': 'h4', 'title': 'Heading 4', 'class': 'ck-heading_heading4'},
+            ]
+        },
+        'image': {
+            'toolbar': ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side']
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells', 'tableCellProperties', 'tableProperties']
+        },
+        'height': '500px',
+        'width': '100%',
+    },
+}
+
+# CKEditor 5 upload settings (uses MEDIA_ROOT)
+CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+CKEDITOR_5_UPLOAD_PATH = "ckeditor5/"
+
+# =============================================================================
+# Simple History Configuration (Revision Tracking)
+# =============================================================================
+SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
+SIMPLE_HISTORY_REVERT_DISABLED = False
+
+# =============================================================================
+# Site Configuration (for SEO/structured data)
+# =============================================================================
+SITE_URL = os.getenv("SITE_URL", "https://ingredientiq.ai")
+SITE_NAME = "IngredientIQ"
+SITE_LOGO = f"{SITE_URL}/static/logo512.png"
 
 # YouTube Data API for video search
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")

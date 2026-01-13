@@ -1,0 +1,360 @@
+/**
+ * Brita Filter CMS - Admin Styles
+ * Enhances the Django admin for the Brita content workflow
+ */
+
+/* ============================================
+   FILTER SECTION HEADERS
+   ============================================ */
+
+.module h2 {
+    font-weight: 600;
+}
+
+/* Filter 0: Pour In - Make it prominent */
+fieldset:first-of-type {
+    border: 2px solid #4CAF50 !important;
+    border-radius: 8px;
+}
+
+fieldset:first-of-type h2 {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white !important;
+    padding: 12px 15px;
+    border-radius: 6px 6px 0 0;
+    margin: -1px -1px 0 -1px;
+}
+
+/* ============================================
+   DROPZONE STYLING
+   ============================================ */
+
+.dropzone-container {
+    position: relative;
+}
+
+.dropzone-upload-btn {
+    transition: all 0.2s ease;
+}
+
+.dropzone-upload-btn:hover {
+    background: #138496 !important;
+    transform: translateY(-1px);
+}
+
+.dropzone-upload-btn:active {
+    transform: translateY(0);
+}
+
+/* Drag indicator on textarea */
+.markdown-editor.drag-over {
+    border-color: #4CAF50 !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3) !important;
+}
+
+/* ============================================
+   MARKDOWN EDITOR STYLING
+   ============================================ */
+
+/* Markdown editor styling */
+.markdown-editor {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    background-color: #1e1e1e !important;
+    color: #d4d4d4 !important;
+    border: 1px solid #333 !important;
+    border-radius: 4px;
+    padding: 15px !important;
+}
+
+.markdown-editor:focus {
+    border-color: #4CAF50 !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+/* ============================================
+   READONLY PREVIEW AREAS
+   ============================================ */
+
+.readonly-preview {
+    background-color: #f8f9fa !important;
+    border: 1px dashed #ccc !important;
+    color: #333 !important;
+    font-size: 13px;
+}
+
+/* ============================================
+   LOCK TOGGLE STYLING
+   ============================================ */
+
+/* Make lock toggles inline with their field */
+.field-title_locked,
+.field-slug_locked,
+.field-excerpt_locked,
+.field-meta_title_locked,
+.field-meta_description_locked,
+.field-key_takeaways_locked,
+.field-social_copy_linkedin_locked,
+.field-social_copy_twitter_locked,
+.field-social_hashtags_locked,
+.field-summary_for_llms_locked {
+    display: inline-block;
+    vertical-align: top;
+    width: auto;
+    margin-left: 10px;
+}
+
+.field-title_locked label,
+.field-slug_locked label,
+.field-excerpt_locked label,
+.field-meta_title_locked label,
+.field-meta_description_locked label,
+.field-key_takeaways_locked label,
+.field-social_copy_linkedin_locked label,
+.field-social_copy_twitter_locked label,
+.field-social_hashtags_locked label,
+.field-summary_for_llms_locked label {
+    display: inline !important;
+}
+
+/* Lock icon indicator */
+input[name$="_locked"]:checked + label::after {
+    content: " 🔒";
+}
+
+input[name$="_locked"]:not(:checked) + label::after {
+    content: " 🔓";
+    opacity: 0.5;
+}
+
+/* ============================================
+   VALIDATION STATUS
+   ============================================ */
+
+.field-validation_status .readonly,
+.field-lint_report .readonly {
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* ============================================
+   QUALITY SCORE COLORS
+   ============================================ */
+
+.quality-score-high {
+    background-color: #28a745;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+}
+
+.quality-score-medium {
+    background-color: #ffc107;
+    color: black;
+    padding: 3px 10px;
+    border-radius: 15px;
+}
+
+.quality-score-low {
+    background-color: #dc3545;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+}
+
+/* ============================================
+   STATUS BADGES
+   ============================================ */
+
+.status-draft { background-color: #6c757d; }
+.status-review { background-color: #17a2b8; }
+.status-scheduled { background-color: #ffc107; color: black; }
+.status-published { background-color: #28a745; }
+.status-archived { background-color: #dc3545; }
+
+/* ============================================
+   ENTITY TAGS
+   ============================================ */
+
+.entity-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.entity-person { background-color: #e3f2fd; }
+.entity-org { background-color: #f3e5f5; }
+.entity-location { background-color: #e8f5e9; }
+.entity-concept { background-color: #fff3e0; }
+.entity-product { background-color: #fce4ec; }
+
+/* ============================================
+   TOC PREVIEW
+   ============================================ */
+
+.toc-preview {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.toc-preview ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.toc-preview li::before {
+    content: "→ ";
+    color: #666;
+}
+
+/* ============================================
+   FAQ PREVIEW
+   ============================================ */
+
+.faq-preview {
+    background: #fff9e6;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.faq-preview dt {
+    font-weight: bold;
+    color: #333;
+}
+
+.faq-preview dt::before {
+    content: "❓ ";
+}
+
+.faq-preview dd {
+    margin-left: 20px;
+    margin-bottom: 10px;
+    color: #666;
+}
+
+/* ============================================
+   FIELDSET COLLAPSE INDICATORS
+   ============================================ */
+
+fieldset.collapse h2 {
+    cursor: pointer;
+}
+
+fieldset.collapse h2::after {
+    content: " ▼";
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+fieldset.collapsed h2::after {
+    content: " ►";
+}
+
+/* ============================================
+   HELP TEXT ENHANCEMENTS
+   ============================================ */
+
+.help {
+    font-size: 11px !important;
+    color: #666 !important;
+    font-style: italic;
+}
+
+/* Important field indicators */
+.field-raw_draft .help::before {
+    content: "✨ ";
+}
+
+.field-title .help::before,
+.field-excerpt .help::before {
+    content: "🔄 ";
+}
+
+/* ============================================
+   DESCRIPTION BOXES
+   ============================================ */
+
+fieldset .description {
+    background: #e8f4fd;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    border-left: 4px solid #2196F3;
+}
+
+/* Filter 0 special description */
+fieldset:first-of-type .description {
+    background: #e8f5e9;
+    border-left-color: #4CAF50;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 1200px) {
+    .markdown-editor {
+        font-size: 13px !important;
+    }
+}
+
+/* ============================================
+   JSON FIELD STYLING
+   ============================================ */
+
+.field-key_takeaways textarea,
+.field-social_hashtags textarea,
+.field-entities_json textarea,
+.field-sources_json textarea {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+
+.submit-row {
+    background: #f8f9fa;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.submit-row input[type="submit"] {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+/* ============================================
+   LIST VIEW ENHANCEMENTS
+   ============================================ */
+
+#result_list th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+#result_list td {
+    vertical-align: middle;
+}
+
+/* Row highlighting for unpublished */
+#result_list tr.row-draft {
+    background-color: #f8f9fa;
+}
+
+#result_list tr.row-review {
+    background-color: #e3f2fd;
+}
+
+#result_list tr.row-scheduled {
+    background-color: #fff8e1;
+}

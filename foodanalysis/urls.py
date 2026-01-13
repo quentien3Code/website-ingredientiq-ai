@@ -27,6 +27,16 @@ from django.views.generic import TemplateView
 # Health endpoints (deployment gating + diagnostics)
 from .health import healthz, readyz
 
+# SEO: Sitemaps
+from django.contrib.sitemaps.views import sitemap
+from Website.sitemaps import sitemaps
+
+# SEO: RSS/Atom Feeds
+from Website.feeds import LatestBlogsFeed, LatestBlogsAtomFeed, CategoryFeed, TagFeed
+
+# SEO: Dynamic robots.txt, llms.txt, etc.
+from Website.seo_views import robots_txt, llms_txt, humans_txt, security_txt, blog_detail_view
+
 # =============================================================================
 # Frontend Asset Paths Configuration
 # =============================================================================
@@ -134,6 +144,34 @@ urlpatterns = [
     # Back-compat: previous Railway healthcheck path
     path('api/health/', healthz, name='health-check'),
     
+    # ==========================================================================
+    # SEO & DISCOVERY ROUTES (Dynamic, Django-generated)
+    # ==========================================================================
+    # Sitemap - XML sitemap index with all content types
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    
+    # RSS/Atom Feeds
+    path('blog/feed/rss/', LatestBlogsFeed(), name='blog-feed-rss'),
+    path('blog/feed/atom/', LatestBlogsAtomFeed(), name='blog-feed-atom'),
+    path('blog/feed/', LatestBlogsFeed(), name='blog-feed'),  # Default to RSS
+    path('blog/category/<slug:slug>/feed/', CategoryFeed(), name='category-feed'),
+    path('blog/tag/<slug:slug>/feed/', TagFeed(), name='tag-feed'),
+    
+    # Dynamic SEO files (robots.txt, llms.txt, etc.)
+    path('robots.txt', robots_txt, name='robots-txt'),
+    path('llms.txt', llms_txt, name='llms-txt'),
+    path('humans.txt', humans_txt, name='humans-txt'),
+    path('.well-known/security.txt', security_txt, name='security-txt'),
+    
+    # CKEditor 5 URLs (for rich text editor)
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
+    
+    # ==========================================================================
+    # CORE APPLICATION ROUTES
+    # ==========================================================================
+    # Media files - must come before catch-all routes
+    path('media/<path:path>', lambda request, path: serve(request, path, document_root=settings.MEDIA_ROOT), name='media'),
+    
     path('launch',TemplateView.as_view(template_name='ingredient-iq-revised.html'),name='landing'),
     path('admin/', admin.site.urls),  # Django admin at /admin/
     # foodinfo removed - mobile app terminated
@@ -158,15 +196,8 @@ urlpatterns = [
     path('js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'js'))),
     path('images/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'images'))),
     path('manifest.json', lambda request: serve(request, 'manifest.json', document_root=WEBSITE_BUILD_PATH)),
-    path('robots.txt', lambda request: serve(request, 'robots.txt', document_root=WEBSITE_BUILD_PATH)),
     path('logo192.png', lambda request: serve_logo(request, 'logo192.png')),
     path('logo512.png', lambda request: serve_logo(request, 'logo512.png')),
-    
-    # SEO & Discovery Files (NEW)
-    path('sitemap.xml', lambda request: serve(request, 'sitemap.xml', document_root=WEBSITE_BUILD_PATH)),
-    path('llms.txt', lambda request: serve(request, 'llms.txt', document_root=WEBSITE_BUILD_PATH)),
-    path('humans.txt', lambda request: serve(request, 'humans.txt', document_root=WEBSITE_BUILD_PATH)),
-    path('.well-known/security.txt', lambda request: serve(request, 'security.txt', document_root=os.path.join(WEBSITE_BUILD_PATH, '.well-known'))),
     
     # Serve React build static files with correct paths
     path('static/css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static', 'css'))),
@@ -185,8 +216,19 @@ urlpatterns = [
     path('control-panel/', serve_react_admin_panel, name='react-admin-panel'),
     path('control-panel/<path:path>', serve_react_admin_panel, name='react-admin-panel-catch-all'),
     
+    # ==========================================================================
+    # PUBLIC BLOG ROUTES (Server-side rendered for SEO)
+    # ==========================================================================
+    # Blog detail page - serves full HTML with meta tags for SEO/social sharing
+    # This MUST come before the React catch-all to ensure proper rendering
+    path('blog/<slug:slug>/', blog_detail_view, name='blog-detail-public'),
+    
     # Serve the main React app at root (catch-all for React routing)
     path('', serve_react_app, name='react-app'),
     # Catch-all route for React app sub-routes (must be last)
     path('<path:path>', serve_react_app, name='react-app-catch-all'),
 ]
+
+# Serve media files in development (uploaded files like profile pictures, images)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

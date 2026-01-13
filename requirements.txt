@@ -4,7 +4,7 @@ psycopg2-binary>=2.9.9
 python-dotenv>=1.0.0
 whitenoise>=6.6.0
 certifi
-django-storages
+# django-storages  # Removed - no longer using AWS S3
 django-allauth
 django-cors-headers
 requests
@@ -16,3 +16,12 @@ fuzzywuzzy
 beautifulsoup4
 Pillow
 dj-database-url
+
+# Brita Filter CMS Dependencies
+bleach>=6.0.0  # HTML sanitization for markdown output
+django-ckeditor-5>=0.2.10  # Rich text editor (optional fallback)
+django-simple-history>=3.4.0  # Revision history for models
+
+# Optional: Async Task Processing (uncomment to enable)
+# celery>=5.3.0
+# redis>=5.0.0
