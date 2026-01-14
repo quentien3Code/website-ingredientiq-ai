@@ -5,6 +5,18 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def _migrate_download_requested_boolean_to_relation(apps, schema_editor):
+    DownloadPDF = apps.get_model('foodinfo', 'DownloadPDF')
+    DownloadRequest = apps.get_model('foodinfo', 'DownloadRequest')
+
+    # The previous schema stored a boolean flag `download_requested`.
+    # We now store a relation to a DownloadRequest record.
+    for pdf in DownloadPDF.objects.filter(download_requested=True):
+        req = DownloadRequest.objects.create(email=pdf.email, name=pdf.name)
+        pdf.download_requested_new = req
+        pdf.save(update_fields=['download_requested_new'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -31,9 +43,23 @@ class Migration(migrations.Migration):
             name='created_at',
             field=models.DateTimeField(default=datetime.datetime(2025, 10, 7, 11, 24, 5, 94094, tzinfo=datetime.timezone.utc)),
         ),
-        migrations.AlterField(
+        # Avoid Postgres failing to cast boolean -> bigint when converting the field.
+        migrations.AddField(
+            model_name='downloadpdf',
+            name='download_requested_new',
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='download_pdf', to='foodinfo.downloadrequest'),
+        ),
+        migrations.RunPython(
+            _migrate_download_requested_boolean_to_relation,
+            migrations.RunPython.noop,
+        ),
+        migrations.RemoveField(
             model_name='downloadpdf',
             name='download_requested',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='download_pdf', to='foodinfo.downloadrequest'),
+        ),
+        migrations.RenameField(
+            model_name='downloadpdf',
+            old_name='download_requested_new',
+            new_name='download_requested',
         ),
     ]
