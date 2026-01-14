@@ -1511,12 +1511,15 @@ class DownloadPDFView(APIView):
         # pdf = request.FILES.get('pdf') if request.FILES.get('pdf') else None
         if not email:
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-        downloadpdf = WebsiteDownloadPDF.objects.create(email=email,name=name)
-        # Here you can add logic to handle the email (e.g., store it, trigger PDF download, etc.)
-        return Response({'message' : 'PDF is downloading shortly',
-            'downloadpdf_id': downloadpdf.id,
-            # 'pdf_url': downloadpdf.pdf.url if downloadpdf.pdf else None
-        },status=status.HTTP_200_OK)
+        # Log the request (do not create new WebsiteDownloadPDF rows; that model stores the actual PDF asset).
+        DataDownloadRequest.objects.create(email=email, name=name)
+        return Response(
+            {
+                'message': 'Email recorded. Starting download.',
+                'download_url': f'/web/downloadpdf/file/?email={email}',
+            },
+            status=status.HTTP_200_OK,
+        )
 
 class VideoView(APIView):
     def get(self,request):
