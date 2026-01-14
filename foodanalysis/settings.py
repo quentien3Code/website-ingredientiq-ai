@@ -224,8 +224,16 @@ WSGI_APPLICATION = 'foodanalysis.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 import dj_database_url
 
-# Use DATABASE_URL from Railway if available, otherwise fallback to SQLite
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Use a Postgres URL from the environment if available, otherwise fallback to SQLite.
+#
+# Railway typically provides DATABASE_URL, but some setups expose DATABASE_PRIVATE_URL
+# (internal) or other provider-specific names.
+DATABASE_URL = (
+    os.environ.get('DATABASE_URL')
+    or os.environ.get('DATABASE_PRIVATE_URL')
+    or os.environ.get('POSTGRES_URL')
+    or os.environ.get('POSTGRESQL_URL')
+)
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
@@ -238,7 +246,7 @@ else:
         raise ImproperlyConfigured(
             'DATABASE_URL is required in production. SQLite is not safe for multi-instance deployments and will '
             'cause logouts and missing records (each instance has its own database file). '
-            'Provision Railway Postgres and set DATABASE_URL. '
+            'Provision Railway Postgres and set DATABASE_URL (or DATABASE_PRIVATE_URL). '
             'For emergency single-instance only, you may set ALLOW_SQLITE_IN_PROD=1.'
         )
 

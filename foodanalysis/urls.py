@@ -23,6 +23,7 @@ from django.conf.urls.static import static
 from django.http import HttpResponse, FileResponse
 import os
 from django.views.generic import TemplateView
+from pathlib import Path
 
 # Health endpoints (deployment gating + diagnostics)
 from .health import healthz, readyz
@@ -44,6 +45,43 @@ from Website.seo_views import robots_txt, llms_txt, humans_txt, security_txt, bl
 
 WEBSITE_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'website')
 ADMIN_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'admin')
+
+
+def _safe_resolve_under_root(root_dir: str, rel_path: str) -> str:
+    root = Path(root_dir).resolve()
+    candidate = (root / rel_path).resolve()
+    # Prevent path traversal (e.g. ../) from escaping the root.
+    if candidate != root and root not in candidate.parents:
+        raise FileNotFoundError("Invalid path")
+    return str(candidate)
+
+
+def serve_website_image(request, path):
+    """Serve images from frontend/website/images with a safe fallback.
+
+    Avoids noisy 404s for missing content-referenced images by serving a known
+    placeholder instead.
+    """
+    images_root = os.path.join(WEBSITE_BUILD_PATH, 'images')
+    fallback_name = '404-error-img.png'
+
+    try:
+        resolved = _safe_resolve_under_root(images_root, path)
+        if os.path.isfile(resolved):
+            return serve(request, path, document_root=images_root)
+    except Exception:
+        # Treat any traversal / resolution issue as missing.
+        pass
+
+    # Fallback (if present). If it's missing for any reason, return 404.
+    try:
+        resolved_fallback = _safe_resolve_under_root(images_root, fallback_name)
+        if os.path.isfile(resolved_fallback):
+            return serve(request, fallback_name, document_root=images_root)
+    except Exception:
+        pass
+
+    return HttpResponse('Not Found', status=404)
 
 
 def serve_react_app(request, path=None):
@@ -216,7 +254,7 @@ urlpatterns = [
     path('assets/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'static'))),
     path('css/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'css'))),
     path('js/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'js'))),
-    path('images/<path:path>', lambda request, path: serve(request, path, document_root=os.path.join(WEBSITE_BUILD_PATH, 'images'))),
+    path('images/<path:path>', serve_website_image, name='website-images'),
     path('manifest.json', lambda request: serve(request, 'manifest.json', document_root=WEBSITE_BUILD_PATH)),
     path('logo192.png', lambda request: serve_logo(request, 'logo192.png')),
     path('logo512.png', lambda request: serve_logo(request, 'logo512.png')),
