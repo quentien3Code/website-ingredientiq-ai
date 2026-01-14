@@ -168,6 +168,25 @@ def serve_admin_static(request, path):
     file_path = os.path.join(ADMIN_BUILD_PATH, 'static', path)
     
     if os.path.exists(file_path):
+        # Some older admin builds hard-code absolute API origins like
+        # https://ingredientiq.ai/master, which breaks when the site is served
+        # from https://www.ingredientiq.ai due to CSP/CORS. Rewrite those to
+        # same-origin relative paths at serve time.
+        if path.endswith('.js'):
+            try:
+                with open(file_path, 'rb') as f:
+                    raw = f.read()
+                text = raw.decode('utf-8', errors='ignore')
+                rewritten = text
+                rewritten = rewritten.replace('https://ingredientiq.ai/master', '/master')
+                rewritten = rewritten.replace('https://ingredientiq.ai/web', '/web')
+                rewritten = rewritten.replace('https://ingredientiq.ai/foodapp', '/foodapp')
+                if rewritten != text:
+                    return HttpResponse(rewritten, content_type='application/javascript; charset=utf-8')
+            except Exception:
+                # Fall back to raw file serving on any failure.
+                pass
+
         # Determine content type based on file extension
         if path.endswith('.css'):
             content_type = 'text/css'
@@ -181,7 +200,7 @@ def serve_admin_static(request, path):
             content_type = 'image/svg+xml'
         else:
             content_type = 'application/octet-stream'
-        
+
         return FileResponse(open(file_path, 'rb'), content_type=content_type)
     else:
         return HttpResponse(f'File not found: {file_path}', status=404)
