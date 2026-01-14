@@ -497,6 +497,17 @@ class BlogsView(APIView):
         tags_data = list(blog.tags.values('id', 'name', 'slug')) if detail else []
         
         # Base data (for list views)
+        author_name = (
+            blog.author_entity.name
+            if blog.author_entity and getattr(blog.author_entity, 'name', None)
+            else (blog.author or 'Anonymous')
+        )
+        category_name = (
+            blog.category_new.name
+            if blog.category_new and getattr(blog.category_new, 'name', None)
+            else (blog.category or 'Uncategorized')
+        )
+
         data = {
             'id': blog.id,
             'title': blog.title,
@@ -518,8 +529,13 @@ class BlogsView(APIView):
             'time_to_read': blog.get_reading_time_display(),  # "X min read" format
             
             # Author & Category
-            'author': author_data if author_data else {'name': blog.author or 'Anonymous'},
-            'category': category_data if category_data else {'name': blog.category or 'Uncategorized'},
+            # IMPORTANT: keep these as strings for React rendering.
+            # (React will crash if you try to render an object as a node.)
+            'author': author_name,
+            'category': category_name,
+            # Preserve rich info separately.
+            'author_entity': author_data,
+            'category_entity': category_data,
             
             # Status
             'status': blog.status,
@@ -731,6 +747,17 @@ class BlogBySlugView(APIView):
         
         # Tags
         tags_data = list(blog.tags.values('id', 'name', 'slug'))
+
+        author_name = (
+            blog.author_entity.name
+            if blog.author_entity and getattr(blog.author_entity, 'name', None)
+            else (blog.author or 'Anonymous')
+        )
+        category_name = (
+            blog.category_new.name
+            if blog.category_new and getattr(blog.category_new, 'name', None)
+            else (blog.category or 'Uncategorized')
+        )
         
         return {
             'id': blog.id,
@@ -760,8 +787,10 @@ class BlogBySlugView(APIView):
             'word_count': blog.word_count or 0,
             
             # Author & Category
-            'author': author_data if author_data else {'name': blog.author or 'Anonymous'},
-            'category': category_data if category_data else {'name': blog.category or 'Uncategorized'},
+            'author': author_name,
+            'category': category_name,
+            'author_entity': author_data,
+            'category_entity': category_data,
             
             # Status
             'status': blog.status,
