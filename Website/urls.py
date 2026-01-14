@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import LeadershipView, StayconnectedView, ContactView, TermsandConditionsView, PrivacyPolicyView, BlogsView, BlogBySlugView, FaqsView, TestimonialsView, AboutusView, PlatformsView, InfoView, RelatedPostsView, DownloadPDFView, VideoView, DownloadRequestView, validate_slug
+from .views import LeadershipView, StayconnectedView, ContactView, TermsandConditionsView, PrivacyPolicyView, BlogsView, BlogBySlugView, FaqsView, TestimonialsView, AboutusView, PlatformsView, InfoView, RelatedPostsView, DownloadPDFView, VideoView, DownloadRequestView, validate_slug, download_smart_label_decoder_pdf
 
 urlpatterns = [
     # Brita CMS API endpoints
@@ -25,6 +25,7 @@ urlpatterns = [
     path('leadership/',LeadershipView.as_view(),name='leadership'),
     path('related-posts/', RelatedPostsView.as_view(), name='related-posts'),
     path('downloadpdf/', DownloadPDFView.as_view(), name='downloadpdf'),
+    path('downloadpdf/file/', download_smart_label_decoder_pdf, name='downloadpdf-file'),
     path('video/', VideoView.as_view(), name='video'),
     path('downloadrequest/', DownloadRequestView.as_view(), name='downloadrequest'),
 ]

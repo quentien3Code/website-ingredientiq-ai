@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from django.db import IntegrityError, models
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.views.decorators.http import require_GET
+from django.conf import settings
+import os
 from .models import (
     DownloadPDF as WebsiteDownloadPDF,
     Stayconnected,
@@ -29,6 +31,68 @@ from rest_framework.serializers import ModelSerializer
 from foodinfo.models import DownloadRequest as DataDownloadRequest
 from bs4 import BeautifulSoup
 import re
+
+
+def _get_latest_downloadable_pdf():
+    return (
+        WebsiteDownloadPDF.objects
+        .exclude(pdf='')
+        .exclude(pdf__isnull=True)
+        .order_by('-updated_at', '-id')
+        .first()
+    )
+
+
+def download_smart_label_decoder_pdf(request):
+    """Download the Smart Label Decoder PDF as an attachment.
+
+    Canonical flow:
+      1) User submits email in the website form.
+      2) Frontend triggers this endpoint to download the PDF.
+      3) We store the email as a DownloadRequest record.
+
+    The actual PDF content is served from the most recently uploaded
+    WebsiteDownloadPDF record that has a non-empty `pdf`.
+    """
+    email = (request.GET.get('email') or '').strip()
+    name = (request.GET.get('name') or '').strip() or None
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+
+    # Best-effort logging (do not block downloads if logging fails).
+    try:
+        DataDownloadRequest.objects.create(email=email, name=name)
+    except Exception:
+        pass
+
+    pdf_obj = _get_latest_downloadable_pdf()
+    if not pdf_obj or not getattr(pdf_obj, 'pdf', None):
+        # Fallback to a bundled asset if present.
+        fallback_path = os.path.join(settings.BASE_DIR, 'static', 'smart-label-decoder.pdf')
+        if os.path.isfile(fallback_path):
+            return FileResponse(
+                open(fallback_path, 'rb'),
+                as_attachment=True,
+                filename='Smart-Label-Decoder.pdf',
+                content_type='application/pdf',
+            )
+
+        return JsonResponse(
+            {
+                'error': 'PDF is not configured yet. Upload it in admin (Website → DownloadPDF) '
+                         'or commit it as static/smart-label-decoder.pdf.',
+            },
+            status=404,
+        )
+
+    try:
+        pdf_file = pdf_obj.pdf.open('rb')
+    except Exception:
+        return JsonResponse({'error': 'PDF file could not be opened'}, status=500)
+
+    resp = FileResponse(pdf_file, as_attachment=True, filename='Smart-Label-Decoder.pdf')
+    resp['Content-Type'] = 'application/pdf'
+    return resp
 
 # Create your views here.
 
