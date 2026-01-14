@@ -115,6 +115,36 @@ class AdminDebugMiddleware(MiddlewareMixin):
         user = getattr(request, 'user', None)
         is_authenticated = bool(getattr(user, 'is_authenticated', False))
 
+        # Response cookie diagnostics (never log values)
+        response_sets_session_cookie = False
+        response_session_cookie_attrs = {}
+        response_sets_csrf_cookie = False
+        response_csrf_cookie_attrs = {}
+        try:
+            cookies = getattr(response, 'cookies', None)
+            if cookies and settings.SESSION_COOKIE_NAME in cookies:
+                response_sets_session_cookie = True
+                morsel = cookies[settings.SESSION_COOKIE_NAME]
+                response_session_cookie_attrs = {
+                    'domain': _truncate(morsel.get('domain', '') or ''),
+                    'path': _truncate(morsel.get('path', '') or ''),
+                    'secure': bool(morsel.get('secure', False)),
+                    'httponly': bool(morsel.get('httponly', False)),
+                    'samesite': _truncate(morsel.get('samesite', '') or ''),
+                }
+            if cookies and settings.CSRF_COOKIE_NAME in cookies:
+                response_sets_csrf_cookie = True
+                morsel = cookies[settings.CSRF_COOKIE_NAME]
+                response_csrf_cookie_attrs = {
+                    'domain': _truncate(morsel.get('domain', '') or ''),
+                    'path': _truncate(morsel.get('path', '') or ''),
+                    'secure': bool(morsel.get('secure', False)),
+                    'httponly': bool(morsel.get('httponly', False)),
+                    'samesite': _truncate(morsel.get('samesite', '') or ''),
+                }
+        except Exception:
+            pass
+
         payload = {
             'event': (
                 'admin_redirect_to_login' if is_redirect_to_login else
@@ -127,9 +157,17 @@ class AdminDebugMiddleware(MiddlewareMixin):
             'status_code': status,
             'is_secure': bool(getattr(request, 'is_secure', lambda: False)()),
             'host': _truncate(getattr(request, 'get_host', lambda: '')()),
+            'forwarded_host': _truncate(request.META.get('HTTP_X_FORWARDED_HOST', '')),
+            'forwarded_proto': _truncate(request.META.get('HTTP_X_FORWARDED_PROTO', '')),
             'has_any_cookie': bool(getattr(request, 'COOKIES', None)),
             'has_session_cookie': settings.SESSION_COOKIE_NAME in request.COOKIES,
             'has_csrf_cookie': settings.CSRF_COOKIE_NAME in request.COOKIES,
+            'configured_session_cookie_domain': _truncate(getattr(settings, 'SESSION_COOKIE_DOMAIN', '') or ''),
+            'configured_csrf_cookie_domain': _truncate(getattr(settings, 'CSRF_COOKIE_DOMAIN', '') or ''),
+            'response_sets_session_cookie': response_sets_session_cookie,
+            'response_session_cookie_attrs': response_session_cookie_attrs,
+            'response_sets_csrf_cookie': response_sets_csrf_cookie,
+            'response_csrf_cookie_attrs': response_csrf_cookie_attrs,
             'user_authenticated': is_authenticated,
             'user_id': getattr(user, 'pk', None) if is_authenticated else None,
             'pid': os.getpid(),
