@@ -231,12 +231,27 @@ if DATABASE_URL:
         'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
 else:
+    _allow_sqlite_in_prod = os.getenv('ALLOW_SQLITE_IN_PROD', '').strip().lower() in (
+        '1', 'true', 'yes', 'y', 'on'
+    )
+    if not DEBUG and not _allow_sqlite_in_prod:
+        raise ImproperlyConfigured(
+            'DATABASE_URL is required in production. SQLite is not safe for multi-instance deployments and will '
+            'cause logouts and missing records (each instance has its own database file). '
+            'Provision Railway Postgres and set DATABASE_URL. '
+            'For emergency single-instance only, you may set ALLOW_SQLITE_IN_PROD=1.'
+        )
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    if not DEBUG:
+        logging.getLogger(__name__).warning(
+            'ALLOW_SQLITE_IN_PROD=1: using SQLite in production. This is not recommended and must be single-instance.'
+        )
 
 
 # Password validation
