@@ -3,6 +3,7 @@ Custom middleware for handling CORS, security headers, caching, and SEO optimiza
 """
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
+from django.http import HttpResponseNotFound
 import os
 import json
 import socket
@@ -148,6 +149,70 @@ class AdminDebugMiddleware(MiddlewareMixin):
             pass
 
         return response
+
+
+class SensitivePathBlockMiddleware(MiddlewareMixin):
+    """Block access to dotfiles and common secret/config filenames.
+
+    This is an upstream safety rail for scanners probing for `/.env`, `/.git/config`, etc.
+    It returns a 404 and does not disclose whether such files exist.
+
+    NOTE: We explicitly allow `/.well-known/` which is used for standards-based files.
+    """
+
+    _PREFIX_BLOCKLIST = (
+        '/.env',
+        '/.git',
+        '/.hg',
+        '/.svn',
+        '/.ssh',
+        '/.aws',
+        '/.docker',
+        '/.kube',
+        '/.npmrc',
+        '/.pypirc',
+        '/.netrc',
+        '/.htaccess',
+        '/.htpasswd',
+        '/.DS_Store',
+    )
+
+    _EXACT_BLOCKLIST = (
+        '/env',
+        '/dotenv',
+    )
+
+    def process_request(self, request):
+        try:
+            path = getattr(request, 'path', '') or ''
+        except Exception:
+            return None
+
+        # Allow standards-based files.
+        if path.startswith('/.well-known/'):
+            return None
+
+        lower = path.lower()
+
+        if lower in self._EXACT_BLOCKLIST:
+            resp = HttpResponseNotFound('Not Found')
+            resp['Cache-Control'] = 'no-store'
+            return resp
+
+        for prefix in self._PREFIX_BLOCKLIST:
+            if lower.startswith(prefix):
+                resp = HttpResponseNotFound('Not Found')
+                resp['Cache-Control'] = 'no-store'
+                return resp
+
+        # Block any path segment starting with a dot (e.g. /foo/.env, /bar/.git/config)
+        # while preserving '/.well-known/'.
+        if '/.' in lower:
+            resp = HttpResponseNotFound('Not Found')
+            resp['Cache-Control'] = 'no-store'
+            return resp
+
+        return None
 
 
 class SecurityHeadersMiddleware(MiddlewareMixin):

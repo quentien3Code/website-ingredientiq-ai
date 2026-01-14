@@ -48,6 +48,15 @@ ADMIN_BUILD_PATH = os.path.join(settings.BASE_DIR, 'frontend', 'admin')
 
 def serve_react_app(request, path=None):
     """Serve the React app's index.html for all routes"""
+    # Never serve the SPA shell for sensitive paths (e.g. scanners probing for /.env).
+    # This avoids misleading 200s and ensures upstream protection even if middleware order changes.
+    try:
+        req_path = (getattr(request, 'path', '') or '').lower()
+        if req_path.startswith('/.env') or '/.' in req_path:
+            return HttpResponse('Not Found', status=404)
+    except Exception:
+        pass
+
     candidate_paths = [
         os.path.join(WEBSITE_BUILD_PATH, 'index.html'),
         os.path.join(settings.BASE_DIR, 'index.html'),

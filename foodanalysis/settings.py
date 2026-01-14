@@ -182,6 +182,7 @@ INSTALLED_APPS = [
 SITE_ID = 1 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'foodanalysis.middleware.SensitivePathBlockMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # Move CORS to top
     'django.middleware.common.CommonMiddleware',
