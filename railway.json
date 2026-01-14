@@ -8,6 +8,18 @@
     "restartPolicyMaxRetries": 10
   },
   "variables": {
+    "DEBUG": "False",
+
+    "DATABASE_URL": "${{Postgres.DATABASE_PRIVATE_URL}}",
+
+    "DJANGO_ALLOWED_HOSTS": "ingredientiq.ai,www.ingredientiq.ai",
+    "COOKIE_DOMAIN": ".ingredientiq.ai",
+    "SITE_URL": "https://www.ingredientiq.ai",
+    "CANONICAL_ORIGIN": "https://www.ingredientiq.ai",
+
+    "MIGRATIONS_REQUIRED": "true",
+    "COLLECTSTATIC_REQUIRED": "false",
+
     "ADMIN_EMAIL": "admin@ingredientiq.ai",
     "ADMIN_PASSWORD": ""
   }
