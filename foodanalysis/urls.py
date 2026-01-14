@@ -57,6 +57,19 @@ def serve_react_app(request, path=None):
         if os.path.exists(build_path):
             with open(build_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
+            # Optional diagnostics injection (disabled by default).
+            # This avoids shipping debug scripts in production unless explicitly enabled.
+            if getattr(settings, 'ENABLE_BLOGS_DIAGNOSTICS', False):
+                diag_tag = '<script defer="defer" src="/js/blogs-diagnostics.js"></script>'
+                if diag_tag not in content:
+                    main_tag = '<script defer="defer" src="/static/js/main.'
+                    idx = content.find(main_tag)
+                    if idx != -1:
+                        content = content[:idx] + diag_tag + "\n" + content[idx:]
+                    else:
+                        # Fallback: append before closing head.
+                        content = content.replace('</head>', diag_tag + "\n</head>")
             return HttpResponse(content, content_type='text/html')
 
     return HttpResponse('Build folder not found. Please run npm run build first.', status=404)

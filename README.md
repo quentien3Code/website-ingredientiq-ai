@@ -85,10 +85,21 @@ website-ingredientiq-ai/
 ## 🚦 Quick Start
 
 ### Prerequisites
+
 - Python 3.8+
 - PostgreSQL (production) or SQLite (development)
 - Docker & Docker Compose (optional)
 
+## Production Required: `DJANGO_SECRET_KEY`
+
+This service uses Django sessions + CSRF protection. The `SECRET_KEY` must be stable across restarts and across multiple Gunicorn workers/instances.
+
+- In production (`DEBUG=False`), `DJANGO_SECRET_KEY` is required. If it is missing, the app will fail-fast at startup.
+- In development (`DEBUG=True`), you can opt-in to an ephemeral key by setting `ALLOW_INSECURE_DEV_SECRET_KEY=1` (sessions will not survive restarts).
+
+Generate a new key (do not hardcode it in the repo):
+
+`python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
 ### Local Development
 
 1. **Clone the repository**

@@ -15,6 +15,9 @@ from datetime import timedelta
 from dotenv import load_dotenv
 load_dotenv()
 import os
+import logging
+from django.core.exceptions import ImproperlyConfigured
+from urllib.parse import urlparse
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,12 +28,39 @@ AUTH_USER_MODEL = 'foodinfo.User'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY: Secret key loaded from environment variable
-import secrets
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', secrets.token_urlsafe(64))
-
 # SECURITY: Debug mode from environment (default False for safety)
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+
+# SECURITY: SECRET_KEY must be stable across workers/instances.
+# - Production (DEBUG=False): DJANGO_SECRET_KEY is REQUIRED (fail-fast).
+# - Development (DEBUG=True): allow ephemeral key ONLY if explicitly enabled.
+_django_secret_key = os.getenv('DJANGO_SECRET_KEY')
+_legacy_secret_key = os.getenv('SECRET_KEY')
+if _django_secret_key and _legacy_secret_key and _django_secret_key != _legacy_secret_key:
+    raise ImproperlyConfigured(
+        'Conflicting secret keys: both DJANGO_SECRET_KEY and SECRET_KEY are set but differ. '
+        'Set only DJANGO_SECRET_KEY (recommended), or ensure they match.'
+    )
+
+_provided_secret_key = _django_secret_key or _legacy_secret_key
+if _provided_secret_key:
+    SECRET_KEY = _provided_secret_key
+else:
+    _allow_insecure_dev_secret = os.getenv('ALLOW_INSECURE_DEV_SECRET_KEY', '').strip().lower() in (
+        '1', 'true', 'yes', 'y', 'on'
+    )
+    if DEBUG and _allow_insecure_dev_secret:
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(64)
+        logging.getLogger(__name__).warning(
+            'ALLOW_INSECURE_DEV_SECRET_KEY=1: using an ephemeral SECRET_KEY for development only. '
+            'Sessions will not persist across restarts.'
+        )
+    else:
+        raise ImproperlyConfigured(
+            'DJANGO_SECRET_KEY is required. In production (DEBUG=False) it must be set to a stable value. '
+            'For local development only, you may set ALLOW_INSECURE_DEV_SECRET_KEY=1 to use an ephemeral key.'
+        )
 
 # SECURITY: Restrict allowed hosts in production
 ALLOWED_HOSTS = [
@@ -59,6 +89,53 @@ if RAILWAY_PUBLIC_DOMAIN and RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
 if '.up.railway.app' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.up.railway.app')
 
+
+def _is_host_allowed(host: str, allowed_hosts: list[str]) -> bool:
+    if not host:
+        return False
+    host = host.split(':', 1)[0].strip().lower()
+    for pattern in allowed_hosts or []:
+        if not pattern:
+            continue
+        pattern = pattern.strip().lower()
+        if pattern == '*':
+            return True
+        if pattern.startswith('.'):
+            # Matches pattern itself and all subdomains
+            suffix = pattern
+            if host == suffix.lstrip('.') or host.endswith(suffix):
+                return True
+        elif host == pattern:
+            return True
+    return False
+
+
+def _validate_https_origin(value: str, var_name: str) -> str:
+    """Validate an HTTPS origin-style URL and return the normalized origin.
+
+    Example accepted values:
+      - https://www.example.com
+      - https://www.example.com/
+      - https://www.example.com/some/path  (path will be ignored for origin)
+    """
+    if not value or not str(value).strip():
+        raise ImproperlyConfigured(f'{var_name} is required and must be a valid https:// URL')
+
+    raw = str(value).strip()
+    parsed = urlparse(raw)
+    if parsed.scheme.lower() != 'https':
+        raise ImproperlyConfigured(f'{var_name} must use https:// (got: {parsed.scheme!r})')
+    if not parsed.netloc:
+        raise ImproperlyConfigured(f'{var_name} must include a hostname (got: {raw!r})')
+
+    host = parsed.netloc
+    if not _is_host_allowed(host, ALLOWED_HOSTS):
+        raise ImproperlyConfigured(
+            f'{var_name} host {host!r} is not allowed. Add it to DJANGO_ALLOWED_HOSTS.'
+        )
+
+    return f'https://{host}'
+
 # Correct HTTPS detection behind reverse proxies (Railway/Cloudflare/etc)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
@@ -83,6 +160,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # SEO: XML sitemaps
+    'rest_framework',  # Django REST Framework
     'foodinfo',
     # 'storages',  # Removed - no longer using AWS S3
     # 'social_django'
@@ -109,6 +187,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'foodanalysis.middleware.AdminDebugMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -215,8 +294,6 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-import os
-load_dotenv() 
 import ssl
 import certifi
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -274,14 +351,24 @@ def _env_bool(name: str, default: bool) -> bool:
     return os.getenv(name, str(default)).strip().lower() in ('true', '1', 'yes', 'y', 'on')
 
 
+ADMIN_DEBUG = _env_bool('ADMIN_DEBUG', False)
+
+
 X_FRAME_OPTIONS = 'DENY'
 CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', not DEBUG)
 SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
-# Set cookie domain to allow both www and non-www
-SESSION_COOKIE_DOMAIN = os.getenv('SESSION_COOKIE_DOMAIN', None)  # Set to '.ingredientiq.ai' in Railway if needed
-CSRF_COOKIE_DOMAIN = os.getenv('CSRF_COOKIE_DOMAIN', None)
+# Cookie domain (keep session + csrf consistent)
+# Recommended in production behind www/apex split: set COOKIE_DOMAIN=.ingredientiq.ai
+COOKIE_DOMAIN = (
+    os.getenv('COOKIE_DOMAIN')
+    or os.getenv('SESSION_COOKIE_DOMAIN')
+    or os.getenv('CSRF_COOKIE_DOMAIN')
+    or None
+)
+SESSION_COOKIE_DOMAIN = COOKIE_DOMAIN
+CSRF_COOKIE_DOMAIN = COOKIE_DOMAIN
 SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', not DEBUG)
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
@@ -405,14 +492,52 @@ if RAILWAY_PUBLIC_DOMAIN:
 CSRF_TRUSTED_ORIGINS = [
     "https://ingredientiq.ai",
     "https://www.ingredientiq.ai",
-    "https://*.ingredientiq.ai",
-    "https://*.up.railway.app",
+    # Keep this explicit for deterministic CSRF checks behind proxies/CDNs.
     "http://localhost:3000",
     "http://localhost:8000",
 ]
 
 if RAILWAY_PUBLIC_DOMAIN:
     CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
+
+# Log CSRF failures (safe + toggleable; does not leak secrets)
+CSRF_FAILURE_VIEW = 'foodanalysis.csrf_debug.csrf_failure'
+
+
+# =============================================================================
+# Logging (safe, toggleable admin diagnostics)
+# =============================================================================
+
+_ADMIN_DEBUG_LEVEL = 'INFO' if ADMIN_DEBUG else 'WARNING'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
+    },
+    'loggers': {
+        # Django's built-in CSRF logger includes useful failure reasons.
+        'django.security.csrf': {
+            'handlers': ['console'],
+            'level': _ADMIN_DEBUG_LEVEL,
+            'propagate': False,
+        },
+        # Our structured admin diagnostics (enabled via ADMIN_DEBUG=1).
+        'foodanalysis.admin_debug': {
+            'handlers': ['console'],
+            'level': _ADMIN_DEBUG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
 
 # Allow credentials for cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
@@ -506,6 +631,25 @@ SIMPLE_HISTORY_REVERT_DISABLED = False
 SITE_URL = os.getenv("SITE_URL", "https://ingredientiq.ai")
 SITE_NAME = "IngredientIQ"
 SITE_LOGO = f"{SITE_URL}/static/logo512.png"
+
+# Canonical origin policy (used for SEO Link headers). Must be explicit + validated in production.
+CANONICAL_ORIGIN = os.getenv('CANONICAL_ORIGIN', '').strip() or None
+
+# Feature flags
+# Disabled by default (including production). Enable only when doing targeted diagnostics.
+ENABLE_BLOGS_DIAGNOSTICS = os.getenv('ENABLE_BLOGS_DIAGNOSTICS', '').strip().lower() in (
+    '1', 'true', 'yes', 'y', 'on'
+)
+
+# Fail-fast validation in production to prevent SEO/canonical regressions.
+if not DEBUG:
+    # Validate SITE_URL even if not used for canonical headers; it is used for structured data.
+    SITE_URL = _validate_https_origin(SITE_URL, 'SITE_URL')
+    if CANONICAL_ORIGIN:
+        CANONICAL_ORIGIN = _validate_https_origin(CANONICAL_ORIGIN, 'CANONICAL_ORIGIN')
+    else:
+        # Default canonical to validated SITE_URL origin if not explicitly provided.
+        CANONICAL_ORIGIN = SITE_URL
 
 # YouTube Data API for video search
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")

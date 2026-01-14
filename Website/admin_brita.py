@@ -581,20 +581,15 @@ class BlogsAdmin(SimpleHistoryAdmin):
     def preview_link(self, obj):
         """Preview link - opens the actual blog post on the public site"""
         if obj.slug:
-            # Get the full URL including domain for public blogs
-            from django.conf import settings
-            site_url = getattr(settings, 'SITE_URL', 'https://ingredientiq.ai')
-            public_url = f"{site_url}/blog/{obj.slug}/"
-            
             if obj.status == 'published':
                 return format_html(
                     '<a href="{}" target="_blank" style="text-decoration: none; background: #28a745; color: white; padding: 5px 10px; border-radius: 4px;">🌐 View Live Post</a>',
-                    public_url
+                    f"/blog/{obj.slug}/"
                 )
             else:
                 return format_html(
                     '<a href="{}" target="_blank" style="text-decoration: none; background: #6c757d; color: white; padding: 5px 10px; border-radius: 4px;">👁️ Preview Draft</a>',
-                    public_url
+                    f"/blog/{obj.slug}/?preview_token={obj.preview_token}"
                 )
         return format_html('<span style="color: #999;">Save post to generate preview link</span>')
     preview_link.short_description = 'View Post'

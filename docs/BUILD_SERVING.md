@@ -66,6 +66,18 @@ The configuration supports React Router's client-side routing:
 - React Router will handle the routing on the client side
 - Static assets are served directly without going through React Router
 
+## Blogs Route (SPA Shell + API Dependency)
+
+The public blog list route **`/blogs` is a React SPA route**. That means:
+
+- `/blogs` returns `index.html` (SPA shell) via the catch-all React serving in `foodanalysis/urls.py`.
+- The **actual list content** is fetched client-side from **`GET /web/blogs/`**.
+- A post being **saved/published in the database** does *not* guarantee it appears on `/blogs` unless:
+    - the `/web/blogs/` API returns it (filters/status/etc), and
+    - the frontend successfully fetches and renders the response.
+
+This is the common source of “it saved but doesn’t show” confusion: publishing may be correct, but the SPA list is empty/blank due to an API fetch failure.
+
 ## Production Considerations
 
 For production deployment, consider:

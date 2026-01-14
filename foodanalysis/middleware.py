@@ -2,7 +2,152 @@
 Custom middleware for handling CORS, security headers, caching, and SEO optimization
 """
 from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
 import os
+import json
+import socket
+import logging
+from urllib.parse import urlparse, parse_qsl, urlencode
+
+
+_admin_debug_logger = logging.getLogger('foodanalysis.admin_debug')
+
+
+def _admin_debug_enabled() -> bool:
+    return os.getenv('ADMIN_DEBUG', '').strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+
+
+def _truncate(value: str, max_len: int = 200) -> str:
+    if not value:
+        return ''
+    value = str(value)
+    return value if len(value) <= max_len else value[:max_len] + '…'
+
+
+_SENSITIVE_QUERY_KEYS = (
+    'token', 'preview', 'key', 'secret', 'signature', 'sig', 'csrf', 'session', 'auth', 'password', 'pass', 'code'
+)
+
+
+def _scrub_full_path(full_path: str) -> str:
+    """Remove token-like query parameters from a URL path for safe logging."""
+    if not full_path:
+        return ''
+    try:
+        parsed = urlparse(str(full_path))
+        if not parsed.query:
+            return parsed.path or str(full_path)
+
+        scrubbed = []
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+            k = (key or '').strip().lower()
+            if not k:
+                continue
+            if k == 'next':
+                scrubbed.append((key, 'REDACTED'))
+                continue
+            if any(s in k for s in _SENSITIVE_QUERY_KEYS):
+                scrubbed.append((key, 'REDACTED'))
+            else:
+                scrubbed.append((key, value))
+
+        query = urlencode(scrubbed, doseq=True)
+        return f"{parsed.path}?{query}" if query else (parsed.path or str(full_path))
+    except Exception:
+        return _truncate(str(full_path))
+
+
+class AdminDebugMiddleware(MiddlewareMixin):
+    """Temporary, safe diagnostics for Django admin instability.
+
+    Enabled via env var ADMIN_DEBUG=1.
+    Logs only admin requests and never logs cookie/token values.
+    """
+
+    def process_response(self, request, response):
+        if not _admin_debug_enabled():
+            return response
+
+        path = getattr(request, 'path', '') or ''
+        if not path.startswith('/admin/'):
+            return response
+
+        status = getattr(response, 'status_code', None)
+        method = getattr(request, 'method', None)
+        location = response.get('Location', '') if hasattr(response, 'get') else ''
+        has_location_header = bool(location)
+
+        location_is_absolute = False
+        location_scheme = None
+        location_host = None
+        location_path = None
+        if isinstance(location, str) and location:
+            try:
+                parsed = urlparse(location)
+                if parsed.scheme and parsed.netloc:
+                    location_is_absolute = True
+                    location_scheme = parsed.scheme
+                    location_host = parsed.netloc
+                    location_path = parsed.path
+                else:
+                    # Relative redirects (common for Django admin)
+                    location_path = location
+            except Exception:
+                # Never fail logging due to unexpected Location values.
+                pass
+
+        is_redirect_to_login = (
+            status in (301, 302, 303, 307, 308)
+            and isinstance(location, str)
+            and '/admin/login' in location
+        )
+
+        should_log = (
+            method == 'POST'
+            or (isinstance(status, int) and status >= 400)
+            or is_redirect_to_login
+        )
+
+        if not should_log:
+            return response
+
+        user = getattr(request, 'user', None)
+        is_authenticated = bool(getattr(user, 'is_authenticated', False))
+
+        payload = {
+            'event': (
+                'admin_redirect_to_login' if is_redirect_to_login else
+                'admin_403' if status == 403 else
+                'admin_response'
+            ),
+            'method': method,
+            'path': path,
+            'full_path': _truncate(_scrub_full_path(getattr(request, 'get_full_path', lambda: path)())),
+            'status_code': status,
+            'is_secure': bool(getattr(request, 'is_secure', lambda: False)()),
+            'host': _truncate(getattr(request, 'get_host', lambda: '')()),
+            'has_any_cookie': bool(getattr(request, 'COOKIES', None)),
+            'has_session_cookie': settings.SESSION_COOKIE_NAME in request.COOKIES,
+            'has_csrf_cookie': settings.CSRF_COOKIE_NAME in request.COOKIES,
+            'user_authenticated': is_authenticated,
+            'user_id': getattr(user, 'pk', None) if is_authenticated else None,
+            'pid': os.getpid(),
+            'hostname': socket.gethostname(),
+            'has_location_header': has_location_header,
+            'location': _truncate(location),
+            'location_is_absolute': location_is_absolute,
+            'location_scheme': _truncate(location_scheme or ''),
+            'location_host': _truncate(location_host or ''),
+            'location_path': _truncate(location_path or ''),
+        }
+
+        try:
+            _admin_debug_logger.info(json.dumps(payload, separators=(',', ':'), sort_keys=True))
+        except Exception:
+            # Never break responses due to logging.
+            pass
+
+        return response
 
 
 class SecurityHeadersMiddleware(MiddlewareMixin):
@@ -175,7 +320,15 @@ class SEOHeadersMiddleware(MiddlewareMixin):
         
         # Canonical URL
         if request.path == '/':
-            links.append('<https://www.ingredientiq.ai/>; rel="canonical"')
+            try:
+                canonical_origin = getattr(settings, 'CANONICAL_ORIGIN', '') or ''
+                parsed = urlparse(canonical_origin)
+                if parsed.scheme and parsed.netloc:
+                    canonical_root = f"{parsed.scheme}://{parsed.netloc}/"
+                    links.append(f'<{canonical_root}>; rel="canonical"')
+            except Exception:
+                # Never fail response processing due to malformed SITE_URL
+                pass
         
         # Preconnect hints via Link header (in addition to HTML)
         links.extend([
