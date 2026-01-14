@@ -716,7 +716,24 @@ class LeadershipAdmin(admin.ModelAdmin):
     profile_preview.short_description = 'Photo'
 
 
+@admin.register(DownloadPDF)
+class DownloadPDFAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'email', 'pdf_link', 'created_at', 'updated_at']
+    search_fields = ['name', 'email']
+    readonly_fields = ['created_at', 'updated_at', 'pdf_link']
+
+    def pdf_link(self, obj):
+        if getattr(obj, 'pdf', None) and getattr(obj.pdf, 'url', None):
+            return format_html('<a href="{}" target="_blank" rel="noopener">Open PDF</a>', obj.pdf.url)
+        return '-'
+    pdf_link.short_description = 'PDF'
+
+
 # Simple registrations for other models
+# Make the Django admin "View site" link go to the React control panel.
+# This is a relative path so it doesn't depend on host/env.
+admin.site.site_url = '/control-panel/'
+
 admin.site.register(Stayconnected)
 admin.site.register(Contact)
 admin.site.register(TermsandConditions)
@@ -727,6 +744,5 @@ admin.site.register(Aboutus)
 admin.site.register(Platforms)
 admin.site.register(Info)
 admin.site.register(relatedposts)
-admin.site.register(DownloadPDF)
 admin.site.register(Video)
 admin.site.register(DownloadRequest)

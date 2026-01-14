@@ -901,14 +901,14 @@ class relatedposts(models.Model):
         return None
     
 class DownloadPDF(models.Model):
-    email = models.EmailField()
-    name = models.CharField(max_length=255,null=True,blank=True)
-    # pdf = models.FileField(upload_to='website/pdfs/',null=True,blank=True)
+    email = models.EmailField(null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    pdf = models.FileField(upload_to='website/pdfs/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.email
+        return self.name or self.email or f"DownloadPDF #{self.pk}"
     
 class Video(models.Model):
     title = models.CharField(max_length=255)

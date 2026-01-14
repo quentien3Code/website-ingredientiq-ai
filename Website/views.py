@@ -3,12 +3,30 @@ from django.db import IntegrityError, models
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from .models import DownloadPDF, Stayconnected, Contact, TermsandConditions, PrivacyPolicy, Blogs, BlogCategory, BlogTag, BlogAuthor, Faqs, Testimonials, Aboutus, Platforms, Info, Leadership, Video, relatedposts
+from .models import (
+    DownloadPDF as WebsiteDownloadPDF,
+    Stayconnected,
+    Contact,
+    TermsandConditions,
+    PrivacyPolicy,
+    Blogs,
+    BlogCategory,
+    BlogTag,
+    BlogAuthor,
+    Faqs,
+    Testimonials,
+    Aboutus,
+    Platforms,
+    Info,
+    Leadership,
+    Video,
+    relatedposts,
+)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.serializers import ModelSerializer
-from foodinfo.models import DownloadRequest,DownloadPDF
+from foodinfo.models import DownloadRequest as DataDownloadRequest
 from bs4 import BeautifulSoup
 import re
 
@@ -1411,13 +1429,14 @@ class RelatedPostsView(APIView):
 
 class DownloadPDFView(APIView):
     def get(self,request):
-        downloadpdf = DownloadPDF.objects.all()
+        downloadpdf = WebsiteDownloadPDF.objects.all()
         data = []
         for pdf in downloadpdf:
             data.append({
                 'id': pdf.id,
                 'email': pdf.email,
                 'name': pdf.name,
+                'pdf_url': pdf.pdf.url if getattr(pdf, 'pdf', None) else None,
                 'created_at': pdf.created_at,
                 'updated_at': pdf.updated_at
             })
@@ -1428,7 +1447,7 @@ class DownloadPDFView(APIView):
         # pdf = request.FILES.get('pdf') if request.FILES.get('pdf') else None
         if not email:
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-        downloadpdf = DownloadPDF.objects.create(email=email,name=name)
+        downloadpdf = WebsiteDownloadPDF.objects.create(email=email,name=name)
         # Here you can add logic to handle the email (e.g., store it, trigger PDF download, etc.)
         return Response({'message' : 'PDF is downloading shortly',
             'downloadpdf_id': downloadpdf.id,
@@ -1510,15 +1529,13 @@ class DownloadRequestView(APIView):
         email = request.data.get('email')
         if not name or not email:
             return Response({'error': 'Name and email are required'}, status=status.HTTP_400_BAD_REQUEST)
-        downloadpdf = DownloadPDF.objects.create(name=name, email=email)
+        DataDownloadRequest.objects.create(name=name, email=email)
         return Response({'message': 'Download request created successfully'}, status=status.HTTP_200_OK)
 
     def get(self, request):
-        downloadrequest = DownloadPDF.objects.all()
-        print("downloadrequest", downloadrequest)
+        downloadrequest = DataDownloadRequest.objects.all()
         data = []
         for download_req in downloadrequest:
-            print("download_req", download_req)
             data.append({
                 'id': download_req.id,
                 'name': download_req.name,
