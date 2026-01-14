@@ -17,9 +17,12 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class UserSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'plan_name', 'premium_type', 'status', 'started_at']
+    list_display = ['user', 'public_plan', 'status', 'started_at']
     list_filter = ['plan_name', 'status']
     search_fields = ['user__email']
+
+    def public_plan(self, obj):
+        return getattr(obj, 'public_plan_label', None) or obj.plan_name
 
 
 class AccountDeletionRequestAdmin(admin.ModelAdmin):

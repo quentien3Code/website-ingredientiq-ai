@@ -117,6 +117,17 @@ def serve_react_app(request, path=None):
                     else:
                         # Fallback: append before closing head.
                         content = content.replace('</head>', diag_tag + "\n</head>")
+
+            # Patch legacy /app plan rendering in the compiled bundle.
+            # This keeps UI copy in sync without requiring a full React rebuild.
+            plan_patch_tag = '<script defer="defer" src="/static/js/plan-patch.js"></script>'
+            if plan_patch_tag not in content:
+                main_tag = '<script defer="defer" src="/static/js/main.'
+                idx = content.find(main_tag)
+                if idx != -1:
+                    content = content[:idx] + plan_patch_tag + "\n" + content[idx:]
+                else:
+                    content = content.replace('</head>', plan_patch_tag + "\n</head>")
             return HttpResponse(content, content_type='text/html')
 
     return HttpResponse('Build folder not found. Please run npm run build first.', status=404)

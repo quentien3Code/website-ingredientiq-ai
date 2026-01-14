@@ -50,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     subscription_notifications_enabled = models.BooleanField(default=True)  # Toggle for subscription notifications
     dark_mode = models.BooleanField(default=False)
     language = models.CharField(max_length=20, default="English")
-    subscription_plan = models.CharField(max_length=100, default="Freemium plan")
+    subscription_plan = models.CharField(max_length=100, default="Free")
     has_answered_onboarding = models.BooleanField(default=False)  # <-- Add this
     privacy_settings_enabled = models.BooleanField(default=True)
     loves_app = models.BooleanField(default=False)  # New field for "Love the app" feature
@@ -168,8 +168,12 @@ class StripeCustomer(models.Model):
 
 class UserSubscription(models.Model):
     PLAN_CHOICES = [
-        ('freemium', 'Freemium'),
+        # Keep legacy DB values but present user-facing names.
+        ('freemium', 'Free'),
         ('premium', 'Premium'),
+        ('family', 'Family/Team'),
+        ('team', 'Family/Team'),
+        ('enterprise', 'Enterprise'),
     ]
     PREMIUM_TYPE_CHOICES = [
         ('monthly', 'Monthly'),
@@ -208,7 +212,26 @@ class UserSubscription(models.Model):
     
     @property
     def is_premium(self):
-        return self.plan_name == 'premium' and self.is_active
+        # Publicly treated as a paid plan. Keep legacy 'premium' while supporting future tiers.
+        return self.plan_name in {'premium', 'family', 'team', 'enterprise'} and self.is_active
+
+    @property
+    def public_plan_label(self) -> str:
+        """User-facing plan label.
+
+        Must not expose internal billing cadence or entitlement mechanics.
+        """
+        if not self.is_active:
+            return 'Free'
+
+        plan = (self.plan_name or '').lower().strip()
+        if plan in {'premium'}:
+            return 'Premium'
+        if plan in {'family', 'team'}:
+            return 'Family/Team'
+        if plan in {'enterprise'}:
+            return 'Enterprise'
+        return 'Free'
     
     @property
     def renewal_date(self):

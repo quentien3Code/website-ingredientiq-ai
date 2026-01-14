@@ -329,13 +329,18 @@ import certifi
 # DEFAULT_FROM_EMAIL = 'AI IngredientIQ <support@serviceconnect.nl>'
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-EMAIL_USE_SSL = False
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').strip().lower() in ('true', '1', 'yes', 'y', 'on')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').strip().lower() in ('true', '1', 'yes', 'y', 'on')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 20))
+
+# From-address for transactional emails (OTP/password reset, etc.).
+# Many SMTP providers require this to match the authenticated sender.
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER or 'no-reply@ingredientiq.ai'
 # EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -393,7 +393,7 @@ confidence = (ocr_quality × barcode_confidence × ner_confidence × source_reli
 **Features**:
 - User registration and authentication
 - Profile management (health conditions, allergies, preferences)
-- Subscription management (Freemium, Premium plans)
+- Subscription management (Free, Premium, Family/Team, Enterprise)
 - Scan history and favorites
 - Settings (notifications, dark mode, language)
 - Account deletion (GDPR compliant)
@@ -641,14 +641,12 @@ Response: {
 ```
 GET /foodapp/subscription-prices/
 Response: {
-  "freemium": {
-    "price": 0,
-    "scans_per_month": 6
+  "free": {
+    "price": 0
   },
-  "premium": {
-    "price": 9.99,
-    "scans_per_month": -1  // unlimited
-  }
+  "premium": {},
+  "family_team": {},
+  "enterprise": {}
 }
 ```
 

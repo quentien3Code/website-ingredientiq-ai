@@ -24,6 +24,8 @@ import re
 from django.http import HttpResponse
 from .utils.response import success_response, error_response
 from django.db import transaction
+from django.conf import settings
+import logging
 
 
 # Create your views here.
@@ -76,21 +78,23 @@ class AdminUserManagementView(APIView):
             user = User.objects.get(id=user_id)
             
             # Get accurate subscription status
+            # Keep legacy machine status values for compatibility, but present a
+            # simplified user-facing taxonomy.
             payment_status = 'freemium'
             premium_type = None
-            subscription_plan = "Freemium plan"
+            subscription_plan = "Free"
             
             try:
                 sub = UserSubscription.objects.get(user=user)
-                if sub.is_premium:  # This checks both plan_name == 'premium' AND is_active
+                if sub.is_premium:
                     payment_status = 'premium'
-                    premium_type = getattr(sub, 'premium_type', None)
-                    subscription_plan = f"{premium_type.capitalize()} Premium" if premium_type else "Premium"
+                    subscription_plan = getattr(sub, 'public_plan_label', None) or 'Premium'
             except UserSubscription.DoesNotExist:
                 pass
             
             # Override subscription data with accurate information
             user_data['payment_status'] = payment_status
+            # Do not leak billing cadence (monthly/yearly) into UI.
             user_data['premium_type'] = premium_type
             user_data['subscription_plan'] = subscription_plan
             
@@ -169,23 +173,40 @@ class AdminForgotPasswordAPIView(APIView):
         except SuperAdmin.DoesNotExist:
             return error_response("Admin not found")
 
-        # Create OTP (for now: simple code logic)
+        # Create OTP
         otp = str(random.randint(100000, 999999))
-        print("---------",otp)
         admin.otp = otp
         admin.save()
 
-        # Send OTP (for real-world: send email)
-        send_mail(
-            'Admin OTP Code',
-            f'Your OTP is {otp}',
-            'admin@yourapp.com',
-            [email],
-            fail_silently=False,
-        )
+        # Send OTP via email. If email isn't configured, return a helpful error
+        # instead of throwing a 500 (which can look like "nothing happens" in UI).
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or 'no-reply@ingredientiq.ai'
+        try:
+            if not getattr(settings, 'EMAIL_HOST_USER', None) or not getattr(settings, 'EMAIL_HOST_PASSWORD', None):
+                raise RuntimeError(
+                    'Email delivery is not configured. Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD (and optionally '
+                    'DEFAULT_FROM_EMAIL) in Railway environment variables, or reset the admin password via '
+                    'ADMIN_PASSWORD + redeploy.'
+                )
+
+            send_mail(
+                'Admin OTP Code',
+                f'Your OTP is {otp}',
+                from_email,
+                [email],
+                fail_silently=False,
+            )
+        except Exception as exc:
+            logging.getLogger(__name__).exception('Failed to send OTP email')
+            return error_response(
+                'Failed to send OTP email',
+                errors={'detail': str(exc)},
+                status_code=500,
+            )
 
         return success_response("OTP sent to email")
     
+@method_decorator(csrf_exempt, name='dispatch')
 class AdminChangePasswordAPIView(APIView):
     def post(self, request):
         email = request.data.get("email")

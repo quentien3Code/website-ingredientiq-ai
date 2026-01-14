@@ -4,7 +4,7 @@ This system handles automatic deletion of premium user accounts after a 30-day g
 
 ## How It Works
 
-### For Freemium Users
+### For Free Users
 - Account is deleted **immediately** when they request deletion
 - No grace period or cancellation option
 
@@ -76,7 +76,7 @@ def delete_scheduled_accounts():
 ## API Endpoints
 
 ### DELETE /foodapp/user-profile/
-- **Freemium users**: Immediate deletion
+- **Free users**: Immediate deletion
 - **Premium users**: Schedule deletion for 30 days later
 
 ### POST /foodapp/login/
