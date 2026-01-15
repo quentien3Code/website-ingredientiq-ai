@@ -745,11 +745,35 @@ class Faqs(models.Model):
     category = models.CharField(max_length=255,null=True,blank=True)
     question = models.CharField(max_length=255)
     answer = models.TextField()
+    order = models.PositiveIntegerField(default=0, help_text='Sort order within a category')
+    is_active = models.BooleanField(default=True, help_text='If false, this FAQ will not appear on the public /faqs page')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.question
+
+
+class FaqCategory(models.Model):
+    """FAQ categories shown on the public FAQ page.
+
+    Note: The current React /faqs page filters by exact category *title* strings.
+    Changing a title can hide FAQs until the frontend is updated.
+    """
+
+    title = models.CharField(max_length=255, unique=True)
+    order = models.PositiveIntegerField(default=0, help_text='Display order in admin and APIs')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = 'FAQ Category'
+        verbose_name_plural = 'FAQ Categories'
+
+    def __str__(self):
+        return self.title
     
 class Testimonials(models.Model):
     name = models.CharField(max_length=255)

@@ -24,10 +24,9 @@ from .models import (
     Stayconnected, Contact, TermsandConditions, PrivacyPolicy, 
     Blogs, Faqs, Testimonials, Aboutus, Platforms, Info, Leadership, 
     relatedposts, DownloadPDF, Video,
-    BlogCategory, BlogTag, BlogAuthor
+    BlogCategory, BlogTag, BlogAuthor, FaqCategory
 )
 from .validators import BlogValidator
-from foodinfo.models import DownloadRequest
 
 
 # ============================================
@@ -729,6 +728,72 @@ class DownloadPDFAdmin(admin.ModelAdmin):
     pdf_link.short_description = 'PDF'
 
 
+# ============================================
+# FAQ CMS
+# ============================================
+
+@admin.register(FaqCategory)
+class FaqCategoryAdmin(admin.ModelAdmin):
+    list_display = ['title', 'order', 'is_active', 'updated_at']
+    list_editable = ['order', 'is_active']
+    search_fields = ['title']
+    ordering = ['order', 'title']
+
+
+class FaqsAdminForm(forms.ModelForm):
+    category_obj = forms.ModelChoiceField(
+        queryset=FaqCategory.objects.all().order_by('order', 'title'),
+        required=False,
+        label='Category',
+        help_text=(
+            'Choose one of the FAQ Categories. The public /faqs page filters by exact category title strings.'
+        ),
+    )
+
+    class Meta:
+        model = Faqs
+        fields = ['category_obj', 'question', 'answer', 'order', 'is_active']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Prefill dropdown from stored string
+        if self.instance and getattr(self.instance, 'category', None):
+            try:
+                self.fields['category_obj'].initial = FaqCategory.objects.get(title=self.instance.category)
+            except FaqCategory.DoesNotExist:
+                pass
+
+    def clean(self):
+        cleaned = super().clean()
+        category_obj = cleaned.get('category_obj')
+        if category_obj is not None:
+            cleaned['category'] = category_obj.title
+        else:
+            # Keep existing value if editing, otherwise require a category.
+            if not (self.instance and getattr(self.instance, 'category', None)):
+                raise forms.ValidationError('Category is required.')
+        return cleaned
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        category_obj = self.cleaned_data.get('category_obj')
+        if category_obj is not None:
+            obj.category = category_obj.title
+        if commit:
+            obj.save()
+        return obj
+
+
+@admin.register(Faqs)
+class FaqsAdmin(admin.ModelAdmin):
+    form = FaqsAdminForm
+    list_display = ['question', 'category', 'order', 'is_active', 'updated_at']
+    list_filter = ['category', 'is_active']
+    list_editable = ['order', 'is_active']
+    search_fields = ['question', 'answer', 'category']
+    ordering = ['category', 'order', 'question']
+
+
 # Simple registrations for other models
 # Make the Django admin "View site" link go to the React control panel.
 # This is a relative path so it doesn't depend on host/env.
@@ -738,11 +803,10 @@ admin.site.register(Stayconnected)
 admin.site.register(Contact)
 admin.site.register(TermsandConditions)
 admin.site.register(PrivacyPolicy)
-admin.site.register(Faqs)
 admin.site.register(Testimonials)
 admin.site.register(Aboutus)
 admin.site.register(Platforms)
 admin.site.register(Info)
 admin.site.register(relatedposts)
 admin.site.register(Video)
-admin.site.register(DownloadRequest)
+

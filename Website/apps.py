@@ -4,7 +4,7 @@ from django.apps import AppConfig
 class WebsiteConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "Website"
-    verbose_name = "Brita Filter CMS"
+    verbose_name = "Website Content (CMS)"
     
     def ready(self):
         """Load signals when app is ready"""

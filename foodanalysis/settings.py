@@ -161,7 +161,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # SEO: XML sitemaps
     'rest_framework',  # Django REST Framework
-    'foodinfo',
+    'foodinfo.apps.FoodinfoConfig',
     # 'storages',  # Removed - no longer using AWS S3
     # 'social_django'
     'django.contrib.sites',

@@ -923,8 +923,16 @@ class FaqsView(APIView):
         category = request.data.get('category')
         question = request.data.get('question')
         answer = request.data.get('answer')
+        order = request.data.get('order', 0)
+        is_active = request.data.get('is_active', True)
         try:
-            faq = Faqs.objects.create(category=category,question=question,answer=answer)
+            faq = Faqs.objects.create(
+                category=category,
+                question=question,
+                answer=answer,
+                order=order,
+                is_active=is_active,
+            )
             return Response({'message':'Faq created'},status=status.HTTP_201_CREATED)
         except IntegrityError:
             return Response({'error':'FAQ creation failed due to database constraint'},status=status.HTTP_400_BAD_REQUEST)
@@ -932,7 +940,7 @@ class FaqsView(APIView):
             return Response({'error':str(e)},status=status.HTTP_400_BAD_REQUEST)
     
     def get(self,request):
-        faqs = Faqs.objects.all()
+        faqs = Faqs.objects.filter(is_active=True).order_by('category', 'order', 'id')
         data = []
         for faq in faqs:
             data.append({
@@ -940,6 +948,8 @@ class FaqsView(APIView):
                 'category': faq.category,
                 'question': faq.question,
                 'answer': faq.answer,
+                'order': getattr(faq, 'order', 0),
+                'is_active': getattr(faq, 'is_active', True),
                 'created_at': faq.created_at,
                 'updated_at': faq.updated_at
             })
@@ -955,6 +965,10 @@ class FaqsView(APIView):
             faq.category = request.data.get('category', faq.category)
             faq.question = request.data.get('question', faq.question)
             faq.answer = request.data.get('answer', faq.answer)
+            if 'order' in request.data:
+                faq.order = request.data.get('order')
+            if 'is_active' in request.data:
+                faq.is_active = request.data.get('is_active')
             faq.save()
             return Response({'message':'Faq updated'},status=status.HTTP_200_OK)
         except Exception as e:
