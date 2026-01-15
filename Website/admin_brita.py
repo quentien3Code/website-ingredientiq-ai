@@ -220,7 +220,7 @@ class BlogsAdmin(SimpleHistoryAdmin):
     date_hierarchy = 'publish_date'
     ordering = ['-created_at']
     filter_horizontal = ['tags', 'related_posts']
-    autocomplete_fields = ['author_entity', 'category_new', 'reviewer']
+    autocomplete_fields = ['author_entity', 'category_new']
     
     # Readonly fields
     readonly_fields = [
